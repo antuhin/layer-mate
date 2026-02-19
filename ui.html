@@ -4,181 +4,173 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Layer Mate: Career OS</title>
+  <title>Layer Mate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap"
+    rel="stylesheet">
 
   <style>
-    /* ========================================
-       DESIGN SYSTEM & THEME
-       ======================================== */
-    * {
+    /* =============================================
+       RESET & BASE
+       ============================================= */
+    *,
+    *::before,
+    *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
     :root {
-      /* Dark Mode Color Palette */
-      --bg-primary: #1A1A1A;
-      --bg-secondary: #242424;
-      --bg-tertiary: #2E2E2E;
-      --bg-hover: #383838;
-      --bg-active: #404040;
+      --bg-0: #141416;
+      --bg-1: #1C1C1F;
+      --bg-2: #242428;
+      --bg-3: #2E2E33;
+      --bg-hover: #33333A;
+      --bg-active: #3A3A42;
 
-      --text-primary: #FFFFFF;
-      --text-secondary: #A8A8A8;
-      --text-tertiary: #707070;
-      --text-disabled: #4A4A4A;
+      --text-0: #F2F2F4;
+      --text-1: #ABABB5;
+      --text-2: #6C6C78;
+      --text-disabled: #3E3E48;
 
-      --accent-primary: #0D99FF;
-      --accent-hover: #0A7FDB;
-      --accent-active: #0866B8;
-      --accent-glow: rgba(13, 153, 255, 0.2);
+      --blue: #3D8EF0;
+      --blue-dim: rgba(61, 142, 240, 0.12);
+      --blue-border: rgba(61, 142, 240, 0.28);
+      --blue-glow: rgba(61, 142, 240, 0.18);
 
-      --success: #00D084;
-      --success-bg: rgba(0, 208, 132, 0.1);
-      --warning: #FFA629;
-      --warning-bg: rgba(255, 166, 41, 0.1);
-      --error: #FF5C5C;
-      --error-bg: rgba(255, 92, 92, 0.1);
+      --green: #34C47C;
+      --green-dim: rgba(52, 196, 124, 0.1);
+      --amber: #F5A623;
+      --amber-dim: rgba(245, 166, 35, 0.1);
+      --red: #F25555;
+      --red-dim: rgba(242, 85, 85, 0.1);
 
-      --border-color: #3A3A3A;
-      --border-radius: 8px;
-      --border-radius-sm: 6px;
-      --border-radius-lg: 12px;
+      --border: #2A2A30;
+      --border-mid: #35353E;
 
-      /* Spacing System */
-      --spacing-xs: 4px;
-      --spacing-sm: 8px;
-      --spacing-md: 12px;
-      --spacing-lg: 16px;
-      --spacing-xl: 20px;
-      --spacing-2xl: 24px;
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-xl: 18px;
 
-      /* Typography */
-      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-size-xs: 10px;
-      --font-size-sm: 11px;
-      --font-size-base: 13px;
-      --font-size-lg: 14px;
-      --font-size-xl: 16px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-      /* Shadows */
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
-      --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
-      --shadow-glow: 0 0 20px var(--accent-glow);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
 
+    html,
     body {
-      font-family: var(--font-family);
-      font-size: var(--font-size-base);
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      padding: 0;
-      margin: 0;
+      height: 100%;
+      background: var(--bg-0);
+      color: var(--text-0);
+      font-family: var(--font);
+      font-size: 13px;
       line-height: 1.5;
-      overflow: hidden;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden;
     }
 
-    /* ========================================
-       MAIN CONTAINER (SIDEBAR + CONTENT)
-       ======================================== */
-    .app-container {
+    /* =============================================
+       SHELL LAYOUT
+       ============================================= */
+    .shell {
       display: flex;
+      flex-direction: column;
       height: 100vh;
       width: 100vw;
     }
 
-    /* ========================================
-       SIDEBAR NAVIGATION
-       ======================================== */
-    .sidebar {
-      width: 70px;
-      background: var(--bg-secondary);
-      border-right: 1px solid var(--border-color);
+    /* =============================================
+       TOP TABS
+       ============================================= */
+    .tab-bar {
       display: flex;
-      flex-direction: column;
-      padding: var(--spacing-md) 0;
-      gap: var(--spacing-xs);
+      background: var(--bg-1);
+      border-bottom: 1px solid var(--border);
+      padding: 0 4px;
       flex-shrink: 0;
     }
 
-    .tab-button {
-      padding: var(--spacing-md) var(--spacing-xs);
+    .tab-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      height: 38px;
       background: transparent;
       border: none;
-      border-left: 3px solid transparent;
-      color: var(--text-secondary);
-      font-family: var(--font-family);
-      font-size: var(--font-size-xs);
+      color: var(--text-2);
+      font-family: var(--font);
+      font-size: 12px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      text-align: center;
-      position: relative;
+      transition: color 0.15s ease;
+      white-space: nowrap;
     }
 
-    .tab-icon {
-      font-size: 24px;
-      display: block;
+    .tab-btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      opacity: 0.7;
     }
 
-    .tab-label {
-      font-size: 9px;
-      line-height: 1.2;
-      font-weight: 500;
+    .tab-btn:hover {
+      color: var(--text-1);
     }
 
-    .tab-button:hover:not(.active) {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.03);
+    .tab-btn.active {
+      color: var(--text-0);
     }
 
-    .tab-button.active {
-      background: rgba(13, 153, 255, 0.08);
-      color: var(--accent-primary);
-      border-left-color: var(--accent-primary);
+    .tab-btn.active svg {
+      opacity: 1;
     }
 
-    .tab-button.active .tab-icon {
-      filter: drop-shadow(0 0 8px var(--accent-glow));
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 12px;
+      right: 12px;
+      height: 2px;
+      background: var(--blue);
+      border-radius: 2px 2px 0 0;
+      transform: scaleX(0);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ========================================
-       CONTENT AREA
-       ======================================== */
-    .content-wrapper {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 12px;
+    .tab-btn.active::after {
+      transform: scaleX(1);
     }
 
-    /* ========================================
-       TAB CONTENT VIEWS
-       ======================================== */
-    .tab-content {
+    /* =============================================
+       CONTENT PANE
+       ============================================= */
+    .pane {
       display: none;
-      animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      overflow-y: auto;
+      flex: 1;
     }
 
-    .tab-content.active {
-      display: block;
+    .pane.active {
+      display: flex;
+      animation: fadeUp 0.2s ease;
     }
 
-    @keyframes fadeInUp {
+    @keyframes fadeUp {
       from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(6px);
       }
 
       to {
@@ -187,162 +179,295 @@
       }
     }
 
-    /* ========================================
-       ACCESSIBILITY ENHANCEMENTS
-       ======================================== */
-
-    /* Skip Link */
-    .skip-link {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      background: var(--accent-primary);
-      color: white;
-      padding: 8px 16px;
-      text-decoration: none;
-      z-index: 100;
+    /* scrollbar */
+    .pane::-webkit-scrollbar {
+      width: 4px;
     }
 
-    .skip-link:focus {
-      top: 0;
+    .pane::-webkit-scrollbar-track {
+      background: transparent;
     }
 
-    /* Visually Hidden */
-    .visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
+    .pane::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 2px;
     }
 
-    /* Focus Indicators */
-    *:focus-visible {
-      outline: 3px solid var(--accent-primary);
-      outline-offset: 2px;
+    /* =============================================
+       CARDS
+       ============================================= */
+    .card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 14px;
     }
 
-    *:focus:not(:focus-visible) {
-      outline: none;
-    }
-
-    /* Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    /* Architect Mode Zones */
-    .dropzone-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .dropzone {
-      border: 1px dashed var(--border-color);
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: var(--border-radius);
-      padding: 12px;
-      position: relative;
-      transition: all 0.2s ease;
-    }
-
-    .dropzone.active {
-      border-color: var(--accent-primary);
-      background: rgba(13, 153, 255, 0.05);
-    }
-
-    .dropzone.assigned {
-      border-color: var(--success);
-      background: rgba(0, 208, 132, 0.05);
-      border-style: solid;
-    }
-
-    .zone-label {
+    .card-title {
       font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-      font-weight: 600;
+      color: var(--text-2);
+      margin-bottom: 10px;
     }
 
-    .zone-status {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 14px;
+    /* =============================================
+       HERO STRIP (page label)
+       ============================================= */
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-1) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
     }
 
-    .btn-zone {
-      width: 100%;
-      background: var(--bg-hover);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-size: 11px;
-      padding: 6px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .btn-zone:hover {
-      background: var(--bg-active);
-    }
-
-    /* ========================================
-       BUTTONS
-       ======================================== */
-    .btn {
-      width: 100%;
-      padding: 8px 12px;
-      border: none;
-      border-radius: var(--border-radius);
-      font-family: var(--font-family);
-      font-size: var(--font-size-base);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    .hero-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r-md);
+      background: var(--blue-dim);
+      border: 1px solid var(--blue-border);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: var(--spacing-sm);
+      flex-shrink: 0;
+      font-size: 17px;
+    }
+
+    .hero-text h1 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-0);
+      letter-spacing: -0.01em;
+    }
+
+    .hero-text p {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 1px;
+    }
+
+    /* =============================================
+       FORM ROW — label + control side by side
+       ============================================= */
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .form-row:first-child {
+      padding-top: 0;
+    }
+
+    .row-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-1);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .row-sub {
+      font-size: 10px;
+      color: var(--text-2);
+      margin-top: 1px;
+    }
+
+    /* =============================================
+       SELECT CONTROL
+       ============================================= */
+    .sel {
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--bg-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236C6C78' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 8px center;
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-sm);
+      color: var(--text-0);
+      font-family: var(--font);
+      font-size: 12px;
+      padding: 6px 28px 6px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      min-width: 130px;
+    }
+
+    .sel:hover {
+      border-color: var(--blue);
+      background-color: var(--bg-3);
+    }
+
+    .sel:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--blue-glow);
+    }
+
+    /* =============================================
+       TOGGLE (checkbox)
+       ============================================= */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .toggle-wrap:last-child {
+      border-bottom: none;
+    }
+
+    .toggle-wrap:first-child {
+      padding-top: 0;
+    }
+
+    .toggle-wrap input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 32px;
+      height: 18px;
+      border-radius: 9px;
+      background: var(--bg-3);
+      border: 1px solid var(--border-mid);
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .toggle-wrap input[type="checkbox"]::before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-2);
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
+    }
+
+    .toggle-wrap input[type="checkbox"]:checked {
+      background: var(--blue);
+      border-color: transparent;
+    }
+
+    .toggle-wrap input[type="checkbox"]:checked::before {
+      transform: translateX(14px);
+      background: #fff;
+    }
+
+    .toggle-text {
+      flex: 1;
+    }
+
+    .toggle-text span {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-1);
+    }
+
+    .toggle-text small {
+      font-size: 10px;
+      color: var(--text-2);
+    }
+
+    /* =============================================
+       EXAMPLE TAG
+       ============================================= */
+    .example-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 6px 10px;
+      background: var(--bg-2);
+      border-radius: var(--r-sm);
+      border: 1px solid var(--border);
+    }
+
+    .example-tag span {
+      font-size: 10px;
+      color: var(--text-2);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .example-tag code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      color: var(--blue);
+      flex: 1;
+    }
+
+    /* =============================================
+       BUTTONS
+       ============================================= */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      padding: 10px 14px;
+      border: none;
+      border-radius: var(--r-md);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
+      letter-spacing: -0.01em;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent-primary) 0%, #0A7FDB 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(13, 153, 255, 0.3);
+      background: linear-gradient(160deg, #4A9AF5 0%, var(--blue) 100%);
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(61, 142, 240, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
     }
 
     .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 6px 16px rgba(13, 153, 255, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      border: 1.5px solid var(--border-color);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background: var(--bg-tertiary);
-      border-color: var(--text-tertiary);
+      box-shadow: 0 4px 20px rgba(61, 142, 240, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       transform: translateY(-1px);
     }
 
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 1px 8px rgba(61, 142, 240, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-2);
+      color: var(--text-1);
+      border: 1px solid var(--border-mid);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-3);
+      color: var(--text-0);
+      border-color: var(--text-2);
+    }
+
     .btn:disabled {
-      opacity: 0.4;
+      opacity: 0.38;
       cursor: not-allowed;
       transform: none !important;
       box-shadow: none !important;
@@ -356,14 +481,24 @@
       opacity: 0;
     }
 
+    /* btn row */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* =============================================
+       SPINNER
+       ============================================= */
     .spinner {
       position: absolute;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      border-top-color: #fff;
       border-radius: 50%;
-      animation: spin 0.6s linear infinite;
+      animation: spin 0.55s linear infinite;
       opacity: 0;
     }
 
@@ -377,2517 +512,1024 @@
       }
     }
 
-    /* ========================================
-       SECTION COMPONENTS
-       ======================================== */
-    .section {
-      background: var(--bg-secondary);
-      border-radius: var(--border-radius-lg);
-      padding: 8px;
-      border: 1px solid var(--border-color);
-      margin-bottom: 8px;
+    /* =============================================
+       DIVIDER
+       ============================================= */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 -14px;
     }
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .section-icon {
-      font-size: 24px;
-    }
-
-    .section-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .section-subtitle {
+    /* =============================================
+       CAPTION / HELPER TEXT
+       ============================================= */
+    .caption {
       font-size: 10px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    /* ========================================
-       FORM CONTROLS
-       ======================================== */
-    .select-input {
-      width: 100%;
-      padding: var(--spacing-md);
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius);
-      color: var(--text-primary);
-      font-size: var(--font-size-sm);
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .select-input:hover {
-      border-color: var(--accent-primary);
-      background: var(--bg-tertiary);
-    }
-
-    .select-input:focus {
-      outline: none;
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 3px rgba(13, 153, 255, 0.1);
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--spacing-md);
-      cursor: pointer;
-      padding: var(--spacing-md);
-      background: var(--bg-primary);
-      border-radius: var(--border-radius);
-      border: 1px solid var(--border-color);
-      transition: all 0.2s ease;
-    }
-
-    .checkbox-label:hover {
-      border-color: var(--accent-primary);
-      background: var(--bg-tertiary);
-    }
-
-    .checkbox-input {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: var(--accent-primary);
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .checkbox-text {
-      flex: 1;
-      font-size: var(--font-size-sm);
-      color: var(--text-primary);
-      line-height: 1.5;
-    }
-
-    /* ========================================
-       MODULE 1: CLEAN (JUNIOR)
-       ======================================== */
-    .hero-section {
+      color: var(--text-2);
       text-align: center;
-      padding: 6px 0;
-      background: linear-gradient(180deg, var(--bg-secondary) 0%, transparent 100%);
-      border-radius: var(--border-radius-lg);
-      margin-bottom: 6px;
-    }
-
-    .hero-icon {
-      font-size: 24px;
-      margin-bottom: 3px;
-      display: block;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes float {
-
-      0%,
-      100% {
-        transform: translateY(0px);
-      }
-
-      50% {
-        transform: translateY(-8px);
-      }
-    }
-
-    .hero-title {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 2px;
-      color: var(--text-primary);
-    }
-
-    .hero-subtitle {
-      font-size: 10px;
-      color: var(--text-secondary);
       line-height: 1.4;
     }
 
-    .career-badge {
-      display: inline-block;
-      background: var(--accent-glow);
-      color: var(--accent-primary);
-      padding: 4px 12px;
-      border-radius: 100px;
-      font-size: var(--font-size-xs);
-      font-weight: 600;
-      margin-top: var(--spacing-sm);
-      border: 1px solid rgba(13, 153, 255, 0.3);
-    }
-
-    /* ========================================
-       MODULE 2: TOKENS (SENIOR)
-       ======================================== */
-    .results-list {
-      max-height: 280px;
-      overflow-y: auto;
-      background: var(--bg-primary);
-      border-radius: var(--border-radius);
-      padding: var(--spacing-xs);
-      margin-top: var(--spacing-md);
-      border: 1px solid var(--border-color);
-    }
-
-    .results-list::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .results-list::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .results-list::-webkit-scrollbar-thumb {
-      background: var(--bg-tertiary);
-      border-radius: 4px;
-    }
-
-    .result-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-      padding: var(--spacing-sm) var(--spacing-md);
-      border-radius: var(--border-radius-sm);
-      background: var(--bg-secondary);
-      margin-bottom: var(--spacing-xs);
-      border: 1px solid var(--border-color);
-    }
-
-    .color-swatch {
-      width: 24px;
-      height: 24px;
-      border-radius: 4px;
-      flex-shrink: 0;
-      border: 1px solid var(--border-color);
-    }
-
-    .result-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .result-name {
-      font-size: var(--font-size-sm);
-      color: var(--text-primary);
-      font-weight: 500;
-      white-space: nowrap;
+    /* =============================================
+       COLLAPSIBLE
+       ============================================= */
+    .collapsible {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
       overflow: hidden;
-      text-overflow: ellipsis;
     }
 
-    .result-detail {
-      font-size: var(--font-size-xs);
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    /* ========================================
-       MODULE 3: QA & LINT (LEAD)
-       ======================================== */
-    .health-score-container {
+    .coll-header {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: var(--spacing-xl);
-      margin: var(--spacing-lg) 0;
-    }
-
-    .health-score {
-      position: relative;
-      width: 120px;
-      height: 120px;
-    }
-
-    .score-circle {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: conic-gradient(var(--success) 0deg, var(--bg-tertiary) 0deg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    .score-inner {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      background: var(--bg-primary);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .score-value {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1;
-    }
-
-    .score-label {
-      font-size: var(--font-size-xs);
-      color: var(--text-secondary);
-      margin-top: 4px;
-    }
-
-    .error-category {
-      background: var(--bg-primary);
-      border-radius: var(--border-radius);
-      padding: var(--spacing-md);
-      margin-bottom: var(--spacing-sm);
-      border: 1px solid var(--border-color);
-    }
-
-    .error-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--spacing-xs);
-    }
-
-    .error-title {
-      font-size: var(--font-size-sm);
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .error-count {
-      background: var(--error-bg);
-      color: var(--error);
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: var(--font-size-xs);
-      font-weight: 600;
-    }
-
-    .error-items {
-      font-size: var(--font-size-xs);
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    .error-items-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-xs);
-      margin-top: var(--spacing-sm);
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .error-items-list::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .error-items-list::-webkit-scrollbar-thumb {
-      background: var(--bg-tertiary);
-      border-radius: 3px;
-    }
-
-    .error-item {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      padding: var(--spacing-sm);
-      background: var(--bg-secondary);
-      border-radius: var(--border-radius-sm);
+      gap: 8px;
+      padding: 10px 14px;
       cursor: pointer;
-      transition: all 0.15s ease;
-      border: 1px solid transparent;
-    }
-
-    .error-item:hover {
-      background: var(--bg-tertiary);
-      border-color: var(--accent-primary);
-      transform: translateX(2px);
-    }
-
-    .error-icon {
-      font-size: 14px;
-      flex-shrink: 0;
-    }
-
-    .error-name {
-      flex: 1;
-      font-size: var(--font-size-sm);
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .error-action {
-      color: var(--accent-primary);
-      font-size: var(--font-size-sm);
-      flex-shrink: 0;
-      opacity: 0;
-      transition: opacity 0.15s ease;
-    }
-
-    .error-item:hover .error-action {
-      opacity: 1;
-    }
-
-    /* ========================================
-       MODULE 4: HANDOFF (MANAGER)
-       ======================================== */
-    .status-selector {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-sm);
-      margin: var(--spacing-lg) 0;
-    }
-
-    .status-option {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--bg-primary);
-      border: 2px solid var(--border-color);
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .status-option:hover {
-      border-color: var(--text-tertiary);
-      background: var(--bg-secondary);
-    }
-
-    .status-option.selected {
-      border-color: var(--accent-primary);
-      background: var(--accent-glow);
-    }
-
-    .status-radio {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: var(--accent-primary);
-    }
-
-    .status-label {
-      flex: 1;
-      font-size: var(--font-size-base);
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .status-preview {
-      background: var(--bg-tertiary);
-      border-radius: var(--border-radius);
-      padding: var(--spacing-lg);
-      text-align: center;
-      margin-top: var(--spacing-lg);
-      border: 1px dashed var(--border-color);
-    }
-
-    .preview-label {
-      font-size: var(--font-size-xs);
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-sm);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .status-pill-preview {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      padding: 8px 16px;
-      border-radius: 16px;
-      font-size: var(--font-size-sm);
+      font-size: 12px;
       font-weight: 600;
+      color: var(--text-2);
+      user-select: none;
+      transition: background 0.15s;
     }
 
-    /* ========================================
-       EMPTY STATE
-       ======================================== */
-    .empty-state {
-      text-align: center;
-      padding: var(--spacing-2xl) var(--spacing-lg);
-      color: var(--text-secondary);
-      font-size: var(--font-size-sm);
+    .coll-header:hover {
+      background: var(--bg-hover);
+      color: var(--text-1);
     }
 
-    .empty-icon {
-      font-size: 32px;
-      margin-bottom: var(--spacing-sm);
+    .coll-chevron {
+      margin-left: auto;
+      width: 12px;
+      height: 12px;
+      transition: transform 0.2s ease;
       opacity: 0.5;
+    }
+
+    .collapsible.open .coll-chevron {
+      transform: rotate(180deg);
+    }
+
+    .coll-body {
+      display: none;
+      padding: 0 14px 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .coll-body.pt {
+      padding-top: 12px;
+    }
+
+    .collapsible.open .coll-body {
       display: block;
     }
 
-    /* ========================================
-       TOAST NOTIFICATION
-       ======================================== */
-    .toast {
-      position: fixed;
-      bottom: -100px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      padding: var(--spacing-md) var(--spacing-lg);
-      border-radius: var(--border-radius-lg);
-      box-shadow: var(--shadow-lg);
-      font-size: var(--font-size-base);
-      font-weight: 500;
+    /* =============================================
+       QA / LINT — health score
+       ============================================= */
+    .health-wrap {
       display: flex;
       align-items: center;
-      gap: var(--spacing-md);
-      transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1000;
-      max-width: 280px;
-      border: 1px solid var(--border-color);
+      gap: 16px;
+      padding: 14px;
     }
 
-    .toast.show {
-      bottom: var(--spacing-xl);
-    }
-
-    .toast-icon {
-      font-size: 20px;
+    .score-ring {
+      position: relative;
+      width: 72px;
+      height: 72px;
       flex-shrink: 0;
     }
 
-    .toast-content {
+    .score-ring svg {
+      width: 72px;
+      height: 72px;
+      transform: rotate(-90deg);
+    }
+
+    .score-ring-track {
+      fill: none;
+      stroke: var(--bg-3);
+      stroke-width: 5;
+    }
+
+    .score-ring-fill {
+      fill: none;
+      stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease;
+    }
+
+    .score-label-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-num {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text-0);
+    }
+
+    .score-txt {
+      font-size: 9px;
+      color: var(--text-2);
+      margin-top: 2px;
+    }
+
+    .score-meta {
       flex: 1;
     }
 
-    /* ========================================
-       UTILITY CLASSES
-       ======================================== */
+    .score-meta h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-0);
+    }
+
+    .score-meta p {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 3px;
+    }
+
+    /* issue category */
+    .issue-cat {
+      margin-top: 8px;
+    }
+
+    .issue-cat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .issue-cat-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      padding: 1px 7px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-red {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .badge-amber {
+      background: var(--amber-dim);
+      color: var(--amber);
+    }
+
+    .badge-green {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .badge-blue {
+      background: var(--blue-dim);
+      color: var(--blue);
+    }
+
+    .issue-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-top: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .issue-items::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .issue-items::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 2px;
+    }
+
+    .issue-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.12s ease;
+    }
+
+    .issue-item:hover {
+      background: var(--bg-hover);
+      border-color: var(--blue-border);
+    }
+
+    .issue-item-name {
+      flex: 1;
+      font-size: 11px;
+      color: var(--text-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .issue-item-arrow {
+      font-size: 10px;
+      color: var(--blue);
+      opacity: 0;
+      transition: opacity 0.12s;
+    }
+
+    .issue-item:hover .issue-item-arrow {
+      opacity: 1;
+    }
+
+    /* =============================================
+       EMPTY STATE
+       ============================================= */
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 28px 16px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--r-md);
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .empty p {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.5;
+      max-width: 180px;
+    }
+
+    /* =============================================
+       TOAST
+       ============================================= */
+    #toast {
+      position: fixed;
+      bottom: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      background: var(--bg-3);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-xl);
+      box-shadow: var(--shadow-md);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-0);
+      white-space: nowrap;
+      z-index: 999;
+      transition: bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      max-width: 88vw;
+    }
+
+    #toast.show {
+      bottom: 12px;
+    }
+
+    .toast-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* =============================================
+       UTILITY
+       ============================================= */
     .hidden {
       display: none !important;
     }
 
-    .mt-sm {
-      margin-top: var(--spacing-sm);
-    }
-
-    .mt-md {
-      margin-top: var(--spacing-md);
-    }
-
-    /* ========================================
-       COLLAPSIBLE SECTIONS
-       ======================================== */
-    details summary {
-      list-style: none;
-      user-select: none;
-    }
-
-    details summary::-webkit-details-marker {
-      display: none;
-    }
-
-    details summary:hover {
-      background: rgba(255, 255, 255, 0.05) !important;
-      border-color: var(--accent-primary) !important;
-    }
-
-    details[open] summary span:last-child {
-      transform: rotate(180deg);
-    }
-
-    details summary span:last-child {
-      transition: transform 0.2s ease;
-    }
-
-    /* ========================================
-       PLUGIN HEADER
-       ======================================== */
-    .plugin-header {
-      position: fixed;
-      top: 0;
-      left: 70px;
-      right: 0;
-      height: 48px;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 var(--spacing-md);
-      z-index: 100;
-    }
-
-    .app-container {
-      margin-top: 48px;
-    }
-
-    .undo-redo-buttons {
-      display: flex;
-      gap: 4px;
-    }
-
-    .header-btn {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: var(--bg-primary);
-      color: var(--text-secondary);
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      border: 1px solid var(--border-color);
-    }
-
-    .header-btn:hover:not(:disabled) {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      border-color: var(--accent-primary);
-    }
-
-    .header-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
-    .settings-btn:hover:not(:disabled) {
-      transform: rotate(45deg);
-    }
-
-    /* ========================================
-       SETTINGS MODAL
-       ======================================== */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      animation: fadeIn 0.2s ease;
-    }
-
-    .modal-overlay.show {
-      display: flex;
-    }
-
-    .modal-content {
-      background: var(--bg-primary);
-      border-radius: var(--border-radius-lg);
-      width: 90%;
-      max-width: 500px;
-      max-height: 80vh;
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      border: 1px solid var(--border-color);
-      animation: scaleUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      clip: rect(0, 0, 0, 0);
     }
 
-    @keyframes scaleUp {
-      from {
-        transform: scale(0.9);
-        opacity: 0;
-      }
+    *:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
 
-      to {
-        transform: scale(1);
-        opacity: 1;
+    *:focus:not(:focus-visible) {
+      outline: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
       }
     }
 
-    .modal-header {
-      padding: var(--spacing-lg);
-      border-bottom: 1px solid var(--border-color);
+    /* =============================================
+       INSPECT — STAT CARDS
+       ============================================= */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stat-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 12px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      background: var(--bg-secondary);
+      gap: 12px;
+      transition: border-color 0.15s;
     }
 
-    .modal-header h2 {
-      font-size: var(--font-size-xl);
-      font-weight: 600;
-      margin: 0;
-      color: var(--text-primary);
+    .stat-card:hover {
+      border-color: var(--border-mid);
     }
 
-    .modal-close {
-      width: 28px;
-      height: 28px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 20px;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.2s ease;
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 19px;
+      flex-shrink: 0;
     }
 
-    .modal-close:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-    }
-
-    .modal-body {
-      padding: var(--spacing-lg);
-      overflow-y: auto;
+    .stat-right {
       flex: 1;
+      min-width: 0;
     }
 
-    .modal-body::-webkit-scrollbar {
-      width: 8px;
+    .stat-num {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text-0);
+      letter-spacing: -0.02em;
     }
 
-    .modal-body::-webkit-scrollbar-thumb {
-      background: var(--bg-tertiary);
-      border-radius: 4px;
+    .stat-num.accent {
+      color: var(--amber);
     }
 
-    .settings-section {
-      margin-bottom: var(--spacing-xl);
-      padding-bottom: var(--spacing-xl);
-      border-bottom: 1px solid var(--border-color);
+    .stat-num.zero {
+      color: var(--text-2);
     }
 
-    .settings-section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-
-    .settings-section-title {
-      font-size: var(--font-size-lg);
-      font-weight: 600;
-      margin: 0 0 var(--spacing-md) 0;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-    }
-
-    .settings-toggle {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--bg-secondary);
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      margin-bottom: var(--spacing-sm);
-      border: 1px solid var(--border-color);
-      transition: all 0.2s ease;
-    }
-
-    .settings-toggle:hover {
-      background: var(--bg-tertiary);
-      border-color: var(--accent-primary);
-    }
-
-    .settings-toggle input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: var(--accent-primary);
-    }
-
-    .settings-toggle span {
-      flex: 1;
-      font-size: var(--font-size-base);
-      color: var(--text-primary);
-    }
-
-    .settings-group {
-      margin-top: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--bg-secondary);
-      border-radius: var(--border-radius);
-      border: 1px solid var(--border-color);
-    }
-
-    .settings-group.disabled {
-      opacity: 0.5;
-      pointer-events: none;
-    }
-
-    .settings-label {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--spacing-md);
-      margin-bottom: var(--spacing-sm);
-    }
-
-    .settings-label:last-child {
-      margin-bottom: 0;
-    }
-
-    .settings-label span {
-      font-size: var(--spacing-sm);
-      color: var(--text-secondary);
-    }
-
-    .settings-label input[type="number"] {
-      width: 80px;
-      padding: 6px 8px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius-sm);
-      color: var(--text-primary);
-      font-size: var(--font-size-sm);
-      text-align: center;
-    }
-
-    .settings-label input[type="number"]:focus {
-      outline: none;
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 2px rgba(13, 153, 255, 0.1);
-    }
-
-    .settings-select {
-      flex: 1;
-      max-width: 200px;
-      padding: 6px 8px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius-sm);
-      color: var(--text-primary);
-      font-size: var(--font-size-sm);
-      cursor: pointer;
-    }
-
-    .settings-select:focus {
-      outline: none;
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 2px rgba(13, 153, 255, 0.1);
-    }
-
-    .modal-footer {
-      padding: var(--spacing-lg);
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      gap: var(--spacing-md);
-      background: var(--bg-secondary);
-    }
-
-    .modal-footer .btn {
-      flex: 1;
+    .stat-lbl {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 2px;
+      font-weight: 500;
     }
   </style>
 </head>
 
 <body>
-  <!-- Skip Link for Keyboard Users -->
-  <a href="#main-content" class="skip-link">Skip to main content</a>
-
-  <!-- Screen Reader Announcements -->
   <div role="status" aria-live="polite" aria-atomic="true" class="visually-hidden" id="sr-announcements"></div>
 
-  <!-- Header with Settings and Undo/Redo -->
-  <div class="plugin-header">
-    <div class="undo-redo-buttons">
-      <button id="undo-btn" class="header-btn" title="Undo (Cmd+Z)" aria-label="Undo" disabled>
-        ↶
-      </button>
-      <button id="redo-btn" class="header-btn" title="Redo (Cmd+Shift+Z)" aria-label="Redo" disabled>
-        ↷
-      </button>
-    </div>
-    <button id="settings-btn" class="header-btn settings-btn" title="Settings" aria-label="Open settings">
-      ⚙️
-    </button>
-  </div>
+  <div class="shell">
 
-  <!-- Settings Modal -->
-  <div id="settings-modal" class="modal" style="display: none;" role="dialog" aria-labelledby="settings-title"
-    aria-modal="true">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="settings-title">⚙️ Settings</h2>
-        <button id="close-settings" class="close-btn" aria-label="Close settings">×</button>
-      </div>
-      <div class="modal-body">
-        <form id="settings-form">
-          <!-- Achievement Thresholds -->
-          <fieldset>
-            <legend>🏆 Achievement Thresholds</legend>
-            <div class="form-group">
-              <label for="expert-threshold">Expert Level:</label>
-              <input type="number" id="expert-threshold" name="expertThreshold" min="50" max="100" value="95">
-            </div>
-            <div class="form-group">
-              <label for="senior-threshold">Senior Level:</label>
-              <input type="number" id="senior-threshold" name="seniorThreshold" min="40" max="95" value="85">
-            </div>
-            <div class="form-group">
-              <label for="junior-threshold">Junior Level:</label>
-              <input type="number" id="junior-threshold" name="juniorThreshold" min="30" max="85" value="70">
-            </div>
-          </fieldset>
-
-          <!-- Naming Preferences -->
-          <fieldset>
-            <legend>📝 Naming Preferences</legend>
-            <div class="form-group">
-              <label for="default-convention">Default Convention:</label>
-              <select id="default-convention" name="defaultConvention">
-                <option value="semantic">Semantic</option>
-                <option value="descriptive">Descriptive</option>
-                <option value="architect">Architect Mode</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="default-casing">Default Casing:</label>
-              <select id="default-casing" name="defaultCasing">
-                <option value="kebab">kebab-case</option>
-                <option value="camel">camelCase</option>
-                <option value="pascal">PascalCase</option>
-                <option value="snake">snake_case</option>
-              </select>
-            </div>
-          </fieldset>
-
-          <!-- Module Defaults -->
-          <fieldset>
-            <legend>🔧 Module Defaults</legend>
-            <div class="form-group">
-              <label>
-                <input type="checkbox" id="auto-track-analytics" name="autoTrackAnalytics" checked>
-                Auto-track analytics
-              </label>
-            </div>
-            <div class="form-group">
-              <label>
-                <input type="checkbox" id="show-confidence-scores" name="showConfidenceScores" checked>
-                Show confidence scores
-              </label>
-            </div>
-          </fieldset>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button id="reset-settings" class="btn btn-secondary">Reset to Defaults</button>
-        <button id="save-settings" class="btn btn-primary">Save Settings</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Preview Rename Modal -->
-  <div id="preview-modal" class="modal" style="display: none;" role="dialog" aria-labelledby="preview-title"
-    aria-modal="true">
-    <div class="modal-content" style="max-width: 600px;">
-      <div class="modal-header">
-        <h2 id="preview-title">👁️ Preview Rename Changes</h2>
-        <button id="close-preview" class="close-btn" aria-label="Close preview">×</button>
-      </div>
-      <div class="modal-body">
-        <div id="preview-list" class="preview-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;">
-          <!-- Populated dynamically -->
-        </div>
-        <div class="preview-summary"
-          style="padding: 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); text-align: center;">
-          <strong id="preview-count" style="color: var(--accent-primary);">0</strong> layers will be renamed
-        </div>
-      </div>
-      <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button id="cancel-preview" class="btn btn-secondary">Cancel</button>
-        <button id="apply-preview" class="btn btn-primary">Apply Changes</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main App Container -->
-  <div class="app-container">
-    <!-- ========================================
-         SIDEBAR NAVIGATION
-         ======================================== -->
-    <nav class="sidebar" role="tablist" aria-label="Plugin modules">
-      <button class="tab-button active" data-tab="clean" role="tab" aria-selected="true" aria-controls="clean"
-        id="tab-clean">
-        <span class="tab-icon" aria-hidden="true">⚡</span>
-        <span class="tab-label">Clean</span>
+    <!-- =============================================
+         TOP TAB BAR
+         ============================================= -->
+    <nav class="tab-bar" role="tablist" aria-label="Plugin sections">
+      <button class="tab-btn active" data-tab="scan" role="tab" aria-selected="true" id="tab-btn-scan">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.4" />
+          <line x1="9.2" y1="9.2" x2="12" y2="12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        Scan
       </button>
-      <button class="tab-button" data-tab="tokens" role="tab" aria-selected="false" aria-controls="tokens"
-        id="tab-tokens">
-        <span class="tab-icon" aria-hidden="true">📁</span>
-        <span class="tab-label">Organize</span>
+      <button class="tab-btn" data-tab="rename" role="tab" aria-selected="false" id="tab-btn-rename">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M7 1.5L9.5 5.5H4.5L7 1.5Z" fill="currentColor" opacity="0.75" />
+          <circle cx="7" cy="9" r="3.5" stroke="currentColor" stroke-width="1.5" />
+        </svg>
+        Rename
       </button>
-      <button class="tab-button" data-tab="lint" role="tab" aria-selected="false" aria-controls="lint" id="tab-lint">
-        <span class="tab-icon" aria-hidden="true">🛡️</span>
-        <span class="tab-label">QA & Lint</span>
-      </button>
-      <button class="tab-button" data-tab="handoff" role="tab" aria-selected="false" aria-controls="handoff"
-        id="tab-handoff">
-        <span class="tab-icon" aria-hidden="true">🚀</span>
-        <span class="tab-label">Handoff</span>
+      <button class="tab-btn" data-tab="audit" role="tab" aria-selected="false" id="tab-btn-audit">
+        <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M7 2L12.196 11H1.804L7 2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+          <line x1="7" y1="5.5" x2="7" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          <circle cx="7" cy="10" r="0.65" fill="currentColor" />
+        </svg>
+        Audit
       </button>
     </nav>
 
-    <!-- ========================================
-         CONTENT WRAPPER
-         ======================================== -->
-    <div class="content-wrapper">
+    <!-- =============================================
+         SCAN PANE
+         ============================================= -->
+    <section id="pane-scan" class="pane active" role="tabpanel" aria-labelledby="tab-btn-scan">
 
-      <!-- ========================================
-       MODULE 1: THE CLEANER (JUNIOR)
-       ======================================== -->
-      <main id="main-content">
-        <div id="clean" class="tab-content active" role="tabpanel" aria-labelledby="tab-clean">
-          <div class="hero-section">
-            <span class="hero-icon">⚡</span>
-            <h1 class="hero-title">Auto-Rename Layers</h1>
-            <p class="hero-subtitle">
-              Enterprise naming with multiple conventions
-            </p>
-            <span class="career-badge">Junior Level: Speed & Efficiency</span>
+      <!-- Hero -->
+      <div class="hero" style="margin-bottom:0;">
+        <div class="hero-icon" style="background:rgba(245,166,35,0.12); border-color:rgba(245,166,35,0.28);">🔍</div>
+        <div class="hero-text">
+          <h1 id="inspect-root-name">Frame Inspector</h1>
+          <p id="inspect-root-sub">Select a frame and tap Scan</p>
+        </div>
+      </div>
+
+      <!-- Stat grid -->
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#EEF2FF;">📊</div>
+          <div class="stat-right">
+            <div class="stat-num" id="stat-total">—</div>
+            <div class="stat-lbl">Total Layers</div>
           </div>
-
-          <!-- Naming Convention Selector -->
-          <!-- STEP 1: Choose Convention (Gestalt: Proximity) -->
-          <div class="section"
-            style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-              <span style="font-size: 20px;" aria-hidden="true">🏷️</span>
-              <div>
-                <h2 style="font-size: 13px; font-weight: 700; margin: 0; color: var(--text-primary);">Naming Convention
-                </h2>
-                <p style="font-size: 11px; color: var(--text-secondary); margin: 2px 0 0 0;">Choose your team's standard
-                </p>
-              </div>
-            </div>
-            <label for="convention-select" class="visually-hidden">Select naming convention</label>
-            <select id="convention-select" class="select-input" aria-label="Choose naming convention"
-              style="font-size: 13px; padding: 10px 12px;">
-              <option value="architect">Architect Mode</option>
-              <option value="atomic">Hierarchical</option>
-              <option value="slash">Slash Structure</option>
-              <option value="bem">BEM Style</option>
-            </select>
-            <p class="helper-text"
-              style="font-size: 10px; color: var(--text-secondary); margin-top: 6px; opacity: 0.7;">
-              <strong id="convention-example" style="font-weight: 500;">Example:</strong> <span
-                style="font-family: monospace;">Content → Item → Container → Section → Block</span>
-            </p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#FFF7E6;">👁</div>
+          <div class="stat-right">
+            <div class="stat-num" id="stat-hidden">—</div>
+            <div class="stat-lbl">Hidden</div>
           </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#F3EEFF;">🔒</div>
+          <div class="stat-right">
+            <div class="stat-num" id="stat-locked">—</div>
+            <div class="stat-lbl">Locked</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#FFF0F3;">🏷️</div>
+          <div class="stat-right">
+            <div class="stat-num accent" id="stat-unnamed">—</div>
+            <div class="stat-lbl">Unnamed</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#E8F5FF;">📦</div>
+          <div class="stat-right">
+            <div class="stat-num" id="stat-empty">—</div>
+            <div class="stat-lbl">Empty</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#E8FAEA;">🪆</div>
+          <div class="stat-right">
+            <div class="stat-num accent" id="stat-nested">—</div>
+            <div class="stat-lbl">Deeply Nested</div>
+          </div>
+        </div>
+      </div>
 
-          <!-- STEP 2: Smart Filters (Miller's Law: Chunking) -->
-          <details open style="margin-top: 16px;">
-            <summary
-              style="cursor: pointer; padding: 10px 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
-              <span style="opacity: 0.6;">🎯</span>
-              <span>Advanced Filters</span>
-              <span style="margin-left: auto; font-size: 9px; opacity: 0.5;">Optional ▼</span>
-            </summary>
+      <!-- Rescan button -->
+      <button id="scan-btn" class="btn btn-secondary" style="gap:8px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2.5 7A4.5 4.5 0 107 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          <path d="M2.5 4.5V7H5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        <span class="btn-text">Scan</span>
+        <span class="spinner" role="status" aria-label="Loading"></span>
+      </button>
 
-            <div
-              style="margin-top: 8px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.08);">
-              <label class="checkbox-label" for="filter-locked"
-                style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="filter-locked" class="checkbox-input">
-                <span class="checkbox-text" style="font-size: 11px;">Skip locked layers</span>
-              </label>
+    </section>
 
-              <label class="checkbox-label" for="filter-hidden"
-                style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="filter-hidden" class="checkbox-input">
-                <span class="checkbox-text" style="font-size: 11px;">Skip hidden layers</span>
-              </label>
+    <!-- =============================================
+         RENAME PANE
+         ============================================= -->
+    <section id="pane-rename" class="pane" role="tabpanel" aria-labelledby="tab-btn-rename">
 
-              <label class="checkbox-label" for="filter-default" style="display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="filter-default" class="checkbox-input">
-                <span class="checkbox-text" style="font-size: 11px;">Only rename defaults (Frame 1, etc.)</span>
-              </label>
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-icon">✨</div>
+        <div class="hero-text">
+          <h1>Auto-Rename Layers</h1>
+          <p>Smart naming based on hierarchy &amp; type</p>
+        </div>
+      </div>
+
+      <!-- Convention + Casing card -->
+      <div class="card">
+        <div class="card-title">Naming Settings</div>
+
+        <div class="form-row">
+          <div class="row-label">
+            Convention
+            <div class="row-sub">Semantic structure applied to layers</div>
+          </div>
+          <select id="convention-select" class="sel" aria-label="Naming convention">
+            <option value="architect">Architect</option>
+            <option value="atomic" selected>Hierarchical</option>
+            <option value="slash">Slash</option>
+            <option value="bem">BEM</option>
+          </select>
+        </div>
+
+        <div class="example-tag">
+          <span>eg</span>
+          <code id="convention-example">Item → Container → Section → Block</code>
+        </div>
+      </div>
+
+      <!-- Filters card -->
+      <div class="collapsible" id="filters-coll">
+        <div class="coll-header" id="filters-toggle" role="button" tabindex="0" aria-expanded="false"
+          aria-controls="filters-body">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M1 2.5h10M3 6h6M5 9.5h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          Filters
+          <svg class="coll-chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="coll-body pt" id="filters-body">
+          <label class="toggle-wrap">
+            <input type="checkbox" id="filter-locked">
+            <div class="toggle-text">
+              <span>Skip locked layers</span>
             </div>
-          </details>
-
-          <!-- ADVANCED RENAMING OPTIONS -->
-          <details style="margin-top: 12px;">
-            <summary
-              style="cursor: pointer; padding: 10px 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
-              <span style="opacity: 0.6;">⚡</span>
-              <span>Advanced Renaming</span>
-              <span style="margin-left: auto; font-size: 9px; opacity: 0.5;">Optional ▼</span>
-            </summary>
-
-            <div
-              style="margin-top: 8px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.08);">
-
-              <!-- Sequential Numbering -->
-              <div style="margin-bottom: 12px;">
-                <label
-                  style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-primary); margin-bottom: 8px;">
-                  <input type="checkbox" id="enable-sequential" style="margin: 0;">
-                  <span>Sequential Numbering</span>
-                </label>
-                <div id="sequential-controls" style="margin-left: 20px; display: none;">
-                  <div style="display: flex; gap: 8px; margin-bottom: 6px;">
-                    <label style="flex: 1; font-size: 10px; color: var(--text-secondary);">
-                      Start:
-                      <input type="number" id="seq-start" value="1" min="0"
-                        style="width: 100%; padding: 4px 6px; margin-top: 2px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); font-size: 10px;">
-                    </label>
-                    <label style="flex: 1; font-size: 10px; color: var(--text-secondary);">
-                      Padding:
-                      <select id="seq-padding"
-                        style="width: 100%; padding: 4px 6px; margin-top: 2px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); font-size: 10px;">
-                        <option value="0">None (1, 2, 3)</option>
-                        <option value="2" selected>2 digits (01, 02)</option>
-                        <option value="3">3 digits (001, 002)</option>
-                      </select>
-                    </label>
-                  </div>
-                  <label style="font-size: 10px; color: var(--text-secondary);">
-                    Position:
-                    <select id="seq-position"
-                      style="width: 100%; padding: 4px 6px; margin-top: 2px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); font-size: 10px;">
-                      <option value="suffix">Suffix (name-01)</option>
-                      <option value="prefix">Prefix (01-name)</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Find & Replace -->
-              <div style="margin-bottom: 12px;">
-                <label
-                  style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-primary); margin-bottom: 8px;">
-                  <input type="checkbox" id="enable-find-replace" style="margin: 0;">
-                  <span>Find & Replace</span>
-                </label>
-                <div id="find-replace-controls" style="margin-left: 20px; display: none;">
-                  <input type="text" id="find-text" placeholder="Find..."
-                    style="width: 100%; padding: 6px 8px; margin-bottom: 6px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); font-size: 10px;">
-                  <input type="text" id="replace-text" placeholder="Replace with..."
-                    style="width: 100%; padding: 6px 8px; margin-bottom: 6px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); font-size: 10px;">
-                  <label
-                    style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-secondary);">
-                    <input type="checkbox" id="case-sensitive" style="margin: 0;">
-                    <span>Case sensitive</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Prefix/Suffix -->
-              <div style="margin-bottom: 12px;">
-                <label
-                  style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-primary); margin-bottom: 8px;">
-                  <input type="checkbox" id="enable-prefix-suffix" style="margin: 0;">
-                  <span>Add Prefix/Suffix</span>
-                </label>
-                <div id="prefix-suffix-controls" style="margin-left: 20px; display: none;">
-                  <input type="text" id="prefix-text" placeholder="Prefix..."
-                    style="width: 100%; padding: 6px 8px; margin-bottom: 6px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); font-size: 10px;">
-                  <input type="text" id="suffix-text" placeholder="Suffix..."
-                    style="width: 100%; padding: 6px 8px; background: var(--bg-primary); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: var(--text-primary); font-size: 10px;">
-                </div>
-              </div>
-
-              <!-- Quick Presets -->
-              <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
-                <p style="font-size: 10px; color: var(--text-secondary); margin-bottom: 8px;">Quick Presets:</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                  <button class="preset-btn btn btn-secondary" data-preset="clean-defaults"
-                    style="padding: 6px 8px; font-size: 10px; justify-content: center;">
-                    Clean Defaults
-                  </button>
-                  <button class="preset-btn btn btn-secondary" data-preset="remove-numbers"
-                    style="padding: 6px 8px; font-size: 10px; justify-content: center;">
-                    Remove Numbers
-                  </button>
-                  <button class="preset-btn btn btn-secondary" data-preset="capitalize"
-                    style="padding: 6px 8px; font-size: 10px; justify-content: center;">
-                    Capitalize
-                  </button>
-                  <button class="preset-btn btn btn-secondary" data-preset="lowercase"
-                    style="padding: 6px 8px; font-size: 10px; justify-content: center;">
-                    Lowercase
-                  </button>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div style="margin-top: 12px; display: flex; gap: 8px;">
-                <button id="preview-rename-btn" class="btn btn-secondary"
-                  style="flex: 1; padding: 8px 12px; font-size: 11px; justify-content: center;">
-                  👁️ Preview
-                </button>
-                <button id="apply-rename-btn" class="btn btn-primary"
-                  style="flex: 1; padding: 8px 12px; font-size: 11px; justify-content: center;">
-                  ⚡ Apply
-                </button>
-              </div>
+          </label>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="filter-hidden">
+            <div class="toggle-text">
+              <span>Skip hidden layers</span>
             </div>
-          </details>
+          </label>
+          <label class="toggle-wrap">
+            <input type="checkbox" id="filter-default">
+            <div class="toggle-text">
+              <span>Only rename defaults</span>
+              <small>Frame 1, Group 2, etc.</small>
+            </div>
+          </label>
+        </div>
+      </div>
 
+      <!-- Primary action -->
+      <button id="auto-rename-btn" class="btn btn-primary"
+        aria-label="Auto-rename selected layers using chosen convention">
+        <span class="btn-text">Auto-Rename Selection</span>
+        <span class="spinner" role="status" aria-label="Loading"></span>
+      </button>
 
-          <!-- Von Restorff Effect: Isolate Primary Action -->
-          <div
-            style="margin-top: 24px; padding: 20px 0; border-top: 2px solid rgba(255,255,255,0.05); border-bottom: 2px solid rgba(255,255,255,0.05);">
-            <!-- Fitts's Law: Large, Easy Target -->
-            <button id="auto-rename-btn" class="btn btn-primary"
-              style="width: 100%; padding: 16px 20px; font-size: 15px; font-weight: 700; box-shadow: 0 8px 24px rgba(13, 153, 255, 0.4), 0 0 0 3px rgba(13, 153, 255, 0.1); border-radius: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);"
-              aria-label="Auto-rename selected layers using chosen convention"
-              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 32px rgba(13, 153, 255, 0.5), 0 0 0 3px rgba(13, 153, 255, 0.15)';"
-              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 24px rgba(13, 153, 255, 0.4), 0 0 0 3px rgba(13, 153, 255, 0.1)';">
-              <span class="btn-text" aria-hidden="true" style="font-size: 18px;">✨</span>
-              <span class="btn-text" style="letter-spacing: 0.3px;">Auto-Rename Selection</span>
+      <!-- Cleanup utilities card -->
+      <div class="collapsible" id="cleanup-coll">
+        <div class="coll-header" id="cleanup-toggle" role="button" tabindex="0" aria-expanded="false"
+          aria-controls="cleanup-body">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 9.5L9 3M5 2.5H3a.5.5 0 00-.5.5v2" stroke="currentColor" stroke-width="1.4"
+              stroke-linecap="round" />
+            <path d="M9.5 7v2a.5.5 0 01-.5.5H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          Cleanup Tools
+          <svg class="coll-chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="coll-body pt" id="cleanup-body">
+          <div class="btn-row">
+            <button id="remove-hidden-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
+              <span class="btn-text">🗑 Remove Hidden</span>
               <span class="spinner" role="status" aria-label="Loading"></span>
             </button>
-            <p
-              style="text-align: center; font-size: 10px; color: var(--text-secondary); margin-top: 8px; opacity: 0.6;">
-              Applies kebab-case naming to selected layers</p>
-          </div>
-
-          <!-- Gestalt: Group Secondary Actions -->
-          <details open style="margin-top: 12px;">
-            <summary
-              style="cursor: pointer; padding: 10px 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
-              <span style="opacity: 0.6;">⚙️</span>
-              <span>Cleanup Utilities</span>
-              <span style="margin-left: auto; font-size: 9px; opacity: 0.5;">Optional ▼</span>
-            </summary>
-
-
-            <div
-              style="margin-top: 8px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.08);">
-              <p style="font-size: 10px; color: var(--text-secondary); margin-bottom: 10px; opacity: 0.7;">Quick cleanup
-                actions for your layers</p>
-
-              <button id="remove-hidden-btn" class="btn btn-secondary"
-                style="width: 100%; padding: 9px 12px; font-size: 11px; margin-bottom: 6px; justify-content: flex-start;">
-                <span class="btn-text" aria-hidden="true" style="margin-right: 8px;">🗑️</span>
-                <span class="btn-text">Remove Hidden Layers</span>
-                <span class="spinner" role="status" aria-label="Loading"></span>
-              </button>
-
-              <button id="remove-redundant-btn" class="btn btn-secondary"
-                style="width: 100%; padding: 9px 12px; font-size: 11px; justify-content: flex-start;">
-                <span class="btn-text" aria-hidden="true" style="margin-right: 8px;">📦</span>
-                <span class="btn-text">Flatten Redundant Wrappers</span>
-                <span class="spinner" role="status" aria-label="Loading"></span>
-              </button>
-            </div>
-          </details>
-        </div>
-      </main>
-
-      <!-- ========================================
-       MODULE 2: THE ORGANIZER (SENIOR)
-       ======================================== -->
-      <div id="tokens" class="tab-content">
-        <div class="hero-section">
-          <span class="hero-icon">📁</span>
-          <h1 class="hero-title">Smart Organizer</h1>
-          <p class="hero-subtitle">
-            Group components with slash notation
-          </p>
-          <span class="career-badge">Senior Level: System Thinking</span>
-        </div>
-        <!-- Mode Toggle -->
-        <div class="section">
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-secondary active" id="mode-grouping" style="flex: 1;">
-              <span class="btn-text">📁 Grouping</span>
+            <button id="remove-redundant-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
+              <span class="btn-text">📦 Flatten Wrappers</span>
+              <span class="spinner" role="status" aria-label="Loading"></span>
             </button>
-            <button class="btn btn-secondary" id="mode-layout-btn" style="flex: 1;">
-              <span class="btn-text">🏗️ Structure</span>
-            </button>
-            <button class="btn btn-secondary" id="mode-colors" style="flex: 1; opacity: 0.6;">
-              <span class="btn-text">🎨 Colors</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Smart Grouping Mode -->
-        <div id="grouping-mode">
-          <div class="section" style="background: var(--bg-primary); border: 1px dashed var(--border-color);">
-            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-              <strong style="color: var(--text-primary);">How it works:</strong><br>
-              Select layers with common prefixes:<br>
-              • Button Primary, Button Secondary<br>
-              • Card Product, Card User<br>
-              <br>
-              They'll be renamed to:<br>
-              • Button / Primary, Button / Secondary<br>
-              • Card / Product, Card / User
-            </div>
-          </div>
-
-          <button id="smart-grouping-btn" class="btn btn-primary">
-            <span class="btn-text">📁 Group by Prefix</span>
-            <span class="spinner"></span>
-          </button>
-        </div>
-
-        <!-- Architect Layout Mode -->
-        <div id="layout-mode" class="hidden">
-          <div class="dropzone-container">
-            <div class="dropzone" id="zone-header">
-              <div class="zone-label">Header Zone</div>
-              <button class="btn-zone" id="set-header-btn">Set Selected as Header</button>
-              <div class="zone-status hidden" id="status-header">✅</div>
-            </div>
-            <div class="dropzone" id="zone-body">
-              <div class="zone-label">Body / Main Zone</div>
-              <button class="btn-zone" id="set-body-btn">Set Selected as Body</button>
-              <div class="zone-status hidden" id="status-body">✅</div>
-            </div>
-            <div class="dropzone" id="zone-footer">
-              <div class="zone-label">Footer Zone</div>
-              <button class="btn-zone" id="set-footer-btn">Set Selected as Footer</button>
-              <div class="zone-status hidden" id="status-footer">✅</div>
-            </div>
-          </div>
-
-          <button id="auto-structure-btn" class="btn btn-primary" disabled>
-            <span class="btn-text">🏗️ Auto-Structure Body</span>
-            <span class="spinner"></span>
-          </button>
-        </div>
-
-        <!-- Detached Colors Mode -->
-        <div id="colors-mode" class="hidden">
-          <button id="scan-colors-btn" class="btn btn-primary">
-            <span class="btn-text">🔍 Scan for Detached Styles</span>
-            <span class="spinner"></span>
-          </button>
-
-          <div id="colors-results" class="results-list hidden">
-            <!-- Results will be populated here -->
-          </div>
-
-          <div id="colors-empty" class="empty-state">
-            <span class="empty-icon">✅</span>
-            <div>Click "Scan" to check for detached colors</div>
           </div>
         </div>
       </div>
 
-      <!-- ========================================
-       MODULE 3: THE LINTER (LEAD)
-       ======================================== -->
-      <div id="lint" class="tab-content">
-        <div class="hero-section">
-          <span class="hero-icon">🛡️</span>
-          <h1 class="hero-title">Quality Audit</h1>
-          <p class="hero-subtitle">
-            Run comprehensive quality checks on your design
-          </p>
-          <span class="career-badge">Lead Level: Quality Control</span>
-        </div>
-        <button id="audit-btn" class="btn btn-primary">
-          <span class="btn-text">🔍 Run Quality Check</span>
-          <span class="spinner"></span>
-        </button>
+    </section>
 
-        <div id="audit-results" class="hidden">
-          <div class="health-score-container">
-            <div class="health-score">
-              <div class="score-circle" id="score-circle">
-                <div class="score-inner">
-                  <div class="score-value" id="score-value">--</div>
-                  <div class="score-label">Health Score</div>
-                </div>
+    <!-- =============================================
+         AUDIT PANE
+         ============================================= -->
+    <section id="pane-audit" class="pane" role="tabpanel" aria-labelledby="tab-btn-audit">
+
+      <!-- Hero -->
+      <div class="hero" style="--hero-color: var(--green);">
+        <div class="hero-icon" style="background: var(--green-dim); border-color: rgba(52,196,124,0.28);">🛡️</div>
+        <div class="hero-text">
+          <h1>Quality Audit</h1>
+          <p>Comprehensive design quality checks</p>
+        </div>
+      </div>
+
+      <!-- Run button -->
+      <button id="audit-btn" class="btn btn-primary"
+        style="background: linear-gradient(160deg, #3DD98A 0%, #27a964 100%); box-shadow: 0 2px 12px rgba(52,196,124,0.3);">
+        <span class="btn-text">Run Quality Check</span>
+        <span class="spinner" role="status" aria-label="Loading"></span>
+      </button>
+
+      <!-- Results (hidden until audit runs) -->
+      <div id="audit-results" class="hidden">
+        <!-- Health score card -->
+        <div class="card">
+          <div class="health-wrap">
+            <div class="score-ring" id="score-ring-wrap">
+              <svg viewBox="0 0 72 72">
+                <circle class="score-ring-track" cx="36" cy="36" r="30" />
+                <circle id="score-ring-fill" class="score-ring-fill" cx="36" cy="36" r="30" stroke-dasharray="188.5"
+                  stroke-dashoffset="188.5" stroke="var(--green)" />
+              </svg>
+              <div class="score-label-wrap">
+                <span class="score-num" id="score-value">--</span>
+                <span class="score-txt">/ 100</span>
               </div>
             </div>
-          </div>
-
-          <div id="error-list">
-            <!-- Error categories will be populated here -->
-          </div>
-        </div>
-
-        <div id="audit-empty" class="empty-state">
-          <span class="empty-icon">📋</span>
-          <div>Click "Run Quality Check" to audit your selection</div>
-        </div>
-      </div>
-
-      <!-- ========================================
-       MODULE 4: THE HANDOFF MANAGER (MANAGER)
-       ======================================== -->
-      <div id="handoff" class="tab-content">
-        <div class="hero-section">
-          <span class="hero-icon">🚀</span>
-          <h1 class="hero-title">Set Frame Status</h1>
-          <p class="hero-subtitle">
-            Add visual status indicators for dev handoff
-          </p>
-          <span class="career-badge">Manager Level: Process & Scale</span>
-        </div>
-
-        <div class="section">
-          <div class="section-header">
-            <span class="section-icon">🏷️</span>
-            <div>
-              <h2 class="section-title">Choose Status</h2>
-              <p class="section-subtitle">Select the design readiness level</p>
-            </div>
-          </div>
-
-          <div class="status-selector">
-            <label class="status-option selected" data-status="draft">
-              <input type="radio" name="status" value="draft" class="status-radio" checked>
-              <span class="status-label">🔴 Draft</span>
-            </label>
-
-            <label class="status-option" data-status="review">
-              <input type="radio" name="status" value="review" class="status-radio">
-              <span class="status-label">🟡 In Review</span>
-            </label>
-
-            <label class="status-option" data-status="ready">
-              <input type="radio" name="status" value="ready" class="status-radio">
-              <span class="status-label">🟢 Ready for Dev</span>
-            </label>
-          </div>
-
-          <div class="status-preview">
-            <div class="preview-label">Preview</div>
-            <div class="status-pill-preview" id="pill-preview"
-              style="background: rgba(255, 92, 92, 0.15); color: #FF5C5C; border: 1.5px solid #FF5C5C;">
-              🔴 Draft
+            <div class="score-meta">
+              <h3 id="score-title">Health Score</h3>
+              <p id="score-desc">Run an audit to see results</p>
             </div>
           </div>
         </div>
 
-        <button id="apply-status-btn" class="btn btn-primary">
-          <span class="btn-text">Apply Status Pill</span>
-          <span class="spinner"></span>
-        </button>
+        <!-- Issues list -->
+        <div id="error-list" class="card" style="padding: 10px 14px;">
+          <!-- Populated by JS -->
+        </div>
       </div>
 
-      <!-- ========================================
-       TOAST NOTIFICATION
-       ======================================== -->
-      <div id="toast" class="toast">
-        <span class="toast-icon">✨</span>
-        <span id="toast-message" class="toast-content">Success!</span>
+      <!-- Empty state -->
+      <div id="audit-empty">
+        <div class="empty">
+          <div class="empty-icon">📋</div>
+          <p>Select layers or a frame, then run a quality check to see issues.</p>
+        </div>
       </div>
 
-      <!-- ========================================
-       UI LOGIC (VANILLA JAVASCRIPT)
-       ======================================== -->
-      <script>
-        // ========================================
-        // STATE MANAGEMENT
-        // ========================================
-        let currentTab = 'clean';
-        let currentCasing = 'kebab'; // Default to kebab-case
-        let currentStatus = 'draft';
-        let toastTimeout = null;
+    </section>
+  </div><!-- end .shell -->
 
-        // ========================================
-        // ACCESSIBILITY & UX ENHANCEMENTS
-        // ========================================
+  <!-- =============================================
+       TOAST
+       ============================================= -->
+  <div id="toast" role="status" aria-live="assertive">
+    <div class="toast-dot" id="toast-dot"></div>
+    <span id="toast-message">Done</span>
+  </div>
 
-        // Screen Reader Announcements
-        function announceToScreenReader(message) {
-          const srAnnouncements = document.getElementById('sr-announcements');
-          if (srAnnouncements) {
-            srAnnouncements.textContent = message;
-            setTimeout(() => {
-              srAnnouncements.textContent = '';
-            }, 1000);
-          }
-        }
+  <!-- =============================================
+       JAVASCRIPT
+       ============================================= -->
+  <script>
+    // ─── State ──────────────────────────────────────────────────────
+    let toastTimer = null;
 
-        // Advanced Options (Always Visible - No Toggle Needed)
-
-        // Convention Example Updater
-        const conventionSelect = document.getElementById('convention-select');
-        const conventionExample = document.getElementById('convention-example');
-        const architectStructure = document.getElementById('architect-structure');
-
-        const examples = {
-          'atomic': 'Content → Item → Container → Section → Block',
-          'slash': 'button / primary',
-          'bem': 'button__primary',
-          'architect': 'section.[name] + card-item/list-item/grid-item'
-        };
-
-        conventionSelect.addEventListener('change', () => {
-          const selectedConvention = conventionSelect.value;
-          const example = examples[selectedConvention] || examples['atomic'];
-          const exampleSpan = conventionExample.nextElementSibling;
-          if (exampleSpan) {
-            exampleSpan.textContent = example;
-          }
-
-          // Show/hide Architect Structure UI
-          if (selectedConvention === 'architect') {
-            architectStructure.classList.remove('hidden');
-          } else {
-            architectStructure.classList.add('hidden');
-          }
+    // ─── Tab switching ───────────────────────────────────────────────
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
         });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
 
-        // ========================================
-        // AUTO-RESIZE WINDOW TO FIT CONTENT
-        // ========================================
-        function resizeToFitContent() {
-          const contentHeight = document.body.scrollHeight;
-          parent.postMessage({
-            pluginMessage: {
-              type: 'resize-window',
-              height: contentHeight + 20
-            }
-          }, '*');
-        }
+        document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+        document.getElementById('pane-' + tab).classList.add('active');
 
-        // Resize on load
-        setTimeout(resizeToFitContent, 100);
+        parent.postMessage({ pluginMessage: { type: 'save-tab', tab } }, '*');
+      });
+    });
 
-        // Resize when details sections expand/collapse
-        document.querySelectorAll('details').forEach(details => {
-          details.addEventListener('toggle', () => {
-            setTimeout(resizeToFitContent, 50);
-          });
-        });
+    // ─── Collapsible sections ────────────────────────────────────────
+    document.querySelectorAll('.coll-header').forEach(header => {
+      const coll = header.closest('.collapsible');
+      header.addEventListener('click', toggle);
+      header.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+      function toggle() {
+        const open = coll.classList.toggle('open');
+        header.setAttribute('aria-expanded', open);
+      }
+    });
 
-        // ========================================
-        // TAB SWITCHING LOGIC
-        // ========================================
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
+    // ─── Convention example ──────────────────────────────────────────
+    const conventionSelect = document.getElementById('convention-select');
+    const exampleEl = document.getElementById('convention-example');
 
-        tabButtons.forEach(button => {
-          button.addEventListener('click', () => {
-            const targetTab = button.dataset.tab;
+    const EXAMPLES = {
+      architect: 'section.[name] + card-item / list-item',
+      atomic: 'Item → Container → Section → Block',
+      slash: 'Button / Primary',
+      bem: 'button__primary--active',
+    };
 
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
+    conventionSelect.addEventListener('change', () => {
+      exampleEl.textContent = EXAMPLES[conventionSelect.value] || EXAMPLES.atomic;
+    });
 
-            tabContents.forEach(content => content.classList.remove('active'));
-            document.getElementById(targetTab).classList.add('active');
-
-            currentTab = targetTab;
-            parent.postMessage({
-              pluginMessage: {
-                type: 'save-tab',
-                tab: targetTab
-              }
-            }, '*');
-          });
-        });
-
-        // ========================================
-        // MODULE 1: CLEAN - AUTO RENAME
-        // ========================================
-        const autoRenameBtn = document.getElementById('auto-rename-btn');
-
-
-        autoRenameBtn.addEventListener('click', () => {
-          setButtonLoading(autoRenameBtn, true);
-
-          // Collect filter settings
-          const filters = {
+    // ─── Auto-rename ─────────────────────────────────────────────────
+    const autoRenameBtn = document.getElementById('auto-rename-btn');
+    autoRenameBtn.addEventListener('click', () => {
+      setLoading(autoRenameBtn, true);
+      parent.postMessage({
+        pluginMessage: {
+          type: 'auto-rename',
+          casing: 'kebab',
+          convention: conventionSelect.value,
+          filters: {
             skipLocked: document.getElementById('filter-locked')?.checked || false,
             skipHidden: document.getElementById('filter-hidden')?.checked || false,
-            onlyDefaultNames: document.getElementById('filter-default')?.checked || false
-          };
-
-          parent.postMessage({
-            pluginMessage: {
-              type: 'auto-rename',
-              casing: currentCasing,
-              convention: conventionSelect.value,
-              filters: filters
-            }
-          }, '*');
-        });
-
-
-        // Remove Hidden Layers action
-        const removeHiddenBtn = document.getElementById('remove-hidden-btn');
-        if (removeHiddenBtn) {
-          removeHiddenBtn.addEventListener('click', () => {
-            setButtonLoading(removeHiddenBtn, true);
-            parent.postMessage({
-              pluginMessage: {
-                type: 'remove-hidden-layers'
-              }
-            }, '*');
-          });
-        }
-
-        // Remove Redundant Wrappers action
-        const removeRedundantBtn = document.getElementById('remove-redundant-btn');
-        if (removeRedundantBtn) {
-          removeRedundantBtn.addEventListener('click', () => {
-            setButtonLoading(removeRedundantBtn, true);
-            parent.postMessage({
-              pluginMessage: {
-                type: 'remove-redundant-wrappers'
-              }
-            }, '*');
-          });
-        }
-
-        // ========================================
-        // MODULE 2: ORGANIZER - MODE TOGGLE & ACTIONS
-        // ========================================
-        const modeGroupingBtn = document.getElementById('mode-grouping');
-        const modeLayoutBtn = document.getElementById('mode-layout-btn');
-        const modeColorsBtn = document.getElementById('mode-colors');
-
-        const groupingMode = document.getElementById('grouping-mode');
-        const layoutMode = document.getElementById('layout-mode');
-        const colorsMode = document.getElementById('colors-mode');
-
-        const smartGroupingBtn = document.getElementById('smart-grouping-btn');
-        const scanColorsBtn = document.getElementById('scan-colors-btn');
-
-        // Toggle Function
-        function setOrganizerMode(mode) {
-          [groupingMode, layoutMode, colorsMode].forEach(el => el && el.classList.add('hidden'));
-          [modeGroupingBtn, modeLayoutBtn, modeColorsBtn].forEach(btn => btn && (btn.style.opacity = '0.6'));
-
-          if (mode === 'grouping') {
-            groupingMode.classList.remove('hidden');
-            modeGroupingBtn.style.opacity = '1';
-          } else if (mode === 'layout') {
-            layoutMode.classList.remove('hidden');
-            modeLayoutBtn.style.opacity = '1';
-          } else if (mode === 'colors') {
-            colorsMode.classList.remove('hidden');
-            modeColorsBtn.style.opacity = '1';
+            onlyDefaultNames: document.getElementById('filter-default')?.checked || false,
           }
         }
+      }, '*');
+    });
 
-        modeGroupingBtn.addEventListener('click', () => setOrganizerMode('grouping'));
-        modeLayoutBtn.addEventListener('click', () => setOrganizerMode('layout'));
-        modeColorsBtn.addEventListener('click', () => setOrganizerMode('colors'));
+    // ─── Cleanup buttons ─────────────────────────────────────────────
+    const removeHiddenBtn = document.getElementById('remove-hidden-btn');
+    removeHiddenBtn?.addEventListener('click', () => {
+      setLoading(removeHiddenBtn, true);
+      parent.postMessage({ pluginMessage: { type: 'remove-hidden-layers' } }, '*');
+    });
 
-        // Smart Grouping Action
-        smartGroupingBtn.addEventListener('click', () => {
-          setButtonLoading(smartGroupingBtn, true);
-          parent.postMessage({ pluginMessage: { type: 'smart-grouping' } }, '*');
-        });
+    const removeRedundantBtn = document.getElementById('remove-redundant-btn');
+    removeRedundantBtn?.addEventListener('click', () => {
+      setLoading(removeRedundantBtn, true);
+      parent.postMessage({ pluginMessage: { type: 'remove-redundant-wrappers' } }, '*');
+    });
 
-        // Detached Colors Action
-        scanColorsBtn.addEventListener('click', () => {
-          setButtonLoading(scanColorsBtn, true);
-          parent.postMessage({ pluginMessage: { type: 'find-detached-colors' } }, '*');
-        });
+    // ─── Inspect / Scan ──────────────────────────────────────────────
+    const scanBtn = document.getElementById('scan-btn');
+    function triggerScan() {
+      if (scanBtn) setLoading(scanBtn, true);
+      parent.postMessage({ pluginMessage: { type: 'scan-frame' } }, '*');
+    }
+    scanBtn?.addEventListener('click', triggerScan);
 
-        // ========================================
-        // ARCHITECT MODE: DESIGN OS MODULES
-        // ========================================
+    // Auto-scan when the Scan tab becomes active
+    document.querySelector('[data-tab="scan"]')?.addEventListener('click', () => {
+      // Small delay so the pane animation completes first
+      setTimeout(triggerScan, 120);
+    });
 
-        // Module 1: Generate Page Shell
-        const generateShellBtn = document.getElementById('generate-shell-btn');
-        if (generateShellBtn) {
-          generateShellBtn.addEventListener('click', () => {
-            setButtonLoading(generateShellBtn, true);
-            parent.postMessage({
-              pluginMessage: {
-                type: 'generate-page-shell'
-              }
-            }, '*');
-          });
-        }
+    // ─── Audit ───────────────────────────────────────────────────────
 
-        // Module 2: Auto-Structure Content
-        const autoStructureBtn = document.getElementById('auto-structure-btn');
-        if (autoStructureBtn) {
-          autoStructureBtn.addEventListener('click', () => {
-            setButtonLoading(autoStructureBtn, true);
-            parent.postMessage({
-              pluginMessage: {
-                type: 'auto-structure'
-              }
-            }, '*');
-          });
-        }
+    const auditBtn = document.getElementById('audit-btn');
+    auditBtn.addEventListener('click', () => {
+      setLoading(auditBtn, true);
+      parent.postMessage({ pluginMessage: { type: 'quality-audit' } }, '*');
+    });
 
-        // Module 3: Visual Overlay Toggle
-        const visualOverlayToggle = document.getElementById('visual-overlay-toggle');
-        if (visualOverlayToggle) {
-          visualOverlayToggle.addEventListener('change', () => {
-            parent.postMessage({
-              pluginMessage: {
-                type: 'toggle-visual-overlay',
-                enabled: visualOverlayToggle.checked
-              }
-            }, '*');
-          });
-        }
+    // ─── Render quality audit ────────────────────────────────────────
+    function renderQualityAudit(healthScore, errors, totalChecks, passedChecks, improvementTips) {
+      const resultsEl = document.getElementById('audit-results');
+      const emptyEl = document.getElementById('audit-empty');
+      const scoreVal = document.getElementById('score-value');
+      const scoreFill = document.getElementById('score-ring-fill');
+      const scoreTitle = document.getElementById('score-title');
+      const scoreDesc = document.getElementById('score-desc');
+      const errorList = document.getElementById('error-list');
 
-        // ========================================
-        // ARCHITECT MODE: LEGACY HANDLERS (Remove these)
-        // ========================================
-        // Architect Layout Actions
-        const setHeaderBtn = document.getElementById('set-header-btn');
-        const setBodyBtn = document.getElementById('set-body-btn');
-        const setFooterBtn = document.getElementById('set-footer-btn');
+      emptyEl.classList.add('hidden');
+      resultsEl.classList.remove('hidden');
 
-        setHeaderBtn.addEventListener('click', () => {
-          parent.postMessage({ pluginMessage: { type: 'assign-region', region: 'header' } }, '*');
-        });
-        setBodyBtn.addEventListener('click', () => {
-          parent.postMessage({ pluginMessage: { type: 'assign-region', region: 'body' } }, '*');
-        });
-        setFooterBtn.addEventListener('click', () => {
-          parent.postMessage({ pluginMessage: { type: 'assign-region', region: 'footer' } }, '*');
-        });
-        // The autoStructureBtn was moved above, so this listener is removed.
-        // autoStructureBtn.addEventListener('click', () => {
-        //   setButtonLoading(autoStructureBtn, true);
-        //   parent.postMessage({ pluginMessage: { type: 'auto-structure' } }, '*');
-        // });
+      // Score ring
+      const score = Math.min(100, Math.max(0, healthScore));
+      const r = 30;
+      const circ = 2 * Math.PI * r;
+      const offset = circ - (score / 100) * circ;
+      scoreVal.textContent = score;
+      scoreFill.style.strokeDashoffset = offset;
+      scoreFill.style.stroke = score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--amber)' : 'var(--red)';
 
-        // ========================================
-        // MODULE 3: LINT - QUALITY AUDIT
-        // ========================================
-        const auditBtn = document.getElementById('audit-btn');
-        auditBtn.addEventListener('click', () => {
-          setButtonLoading(auditBtn, true);
-          parent.postMessage({
-            pluginMessage: {
-              type: 'quality-audit'
-            }
-          }, '*');
-        });
+      // Title
+      scoreTitle.textContent = score >= 80 ? 'Great Shape' : score >= 50 ? 'Needs Work' : 'Critical Issues';
+      scoreDesc.textContent = passedChecks != null
+        ? `${passedChecks} of ${totalChecks} checks passed`
+        : `${score}/100 health score`;
 
-        // ========================================
-        // MODULE 4: HANDOFF - STATUS SELECTION
-        // ========================================
-        const statusOptions = document.querySelectorAll('.status-option');
-        const pillPreview = document.getElementById('pill-preview');
+      // Issues
+      let html = '';
 
-        const statusStyles = {
-          draft: {
-            text: '🔴 Draft',
-            bg: 'rgba(255, 92, 92, 0.15)',
-            color: '#FF5C5C',
-            border: '#FF5C5C'
-          },
-          review: {
-            text: '🟡 In Review',
-            bg: 'rgba(255, 166, 41, 0.15)',
-            color: '#FFA629',
-            border: '#FFA629'
-          },
-          ready: {
-            text: '🟢 Ready for Dev',
-            bg: 'rgba(0, 208, 132, 0.15)',
-            color: '#00D084',
-            border: '#00D084'
-          }
-        };
+      const cats = [
+        { key: 'missingAltText', label: 'Missing Alt Text', badge: 'badge-red' },
+        { key: 'defaultNames', label: 'Default Layer Names', badge: 'badge-amber' },
+        { key: 'poorContrast', label: 'Contrast Issues', badge: 'badge-amber' },
+      ];
 
-        statusOptions.forEach(option => {
-          option.addEventListener('click', () => {
-            const status = option.dataset.status;
-            currentStatus = status;
-
-            statusOptions.forEach(opt => opt.classList.remove('selected'));
-            option.classList.add('selected');
-
-            // Update preview
-            const style = statusStyles[status];
-            pillPreview.textContent = style.text;
-            pillPreview.style.background = style.bg;
-            pillPreview.style.color = style.color;
-            pillPreview.style.border = `1.5px solid ${style.border}`;
-          });
-        });
-
-        // ========================================
-        // MODULE 4: HANDOFF - APPLY STATUS
-        // ========================================
-        const applyStatusBtn = document.getElementById('apply-status-btn');
-        applyStatusBtn.addEventListener('click', () => {
-          setButtonLoading(applyStatusBtn, true);
-          parent.postMessage({
-            pluginMessage: {
-              type: 'set-frame-status',
-              status: currentStatus
-            }
-          }, '*');
-        });
-
-        // ========================================
-        // LOADING STATES
-        // ========================================
-        function setButtonLoading(button, isLoading) {
-          if (isLoading) {
-            button.classList.add('loading');
-            button.disabled = true;
-          } else {
-            button.classList.remove('loading');
-            button.disabled = false;
-          }
-        }
-
-        // ========================================
-        // TOAST NOTIFICATION SYSTEM
-        // ========================================
-        function showToast(icon, message) {
-          const toast = document.getElementById('toast');
-          const toastIcon = document.querySelector('.toast-icon');
-          const toastMessage = document.getElementById('toast-message');
-
-          toastIcon.textContent = icon;
-          toastMessage.textContent = message;
-          toast.classList.add('show');
-
-          if (toastTimeout) {
-            clearTimeout(toastTimeout);
-          }
-
-          toastTimeout = setTimeout(() => {
-            toast.classList.remove('show');
-          }, 3000);
-        }
-
-        // ========================================
-        // RENDER FUNCTIONS
-        // ========================================
-        function renderDetachedColors(data) {
-          const resultsContainer = document.getElementById('colors-results');
-          const emptyState = document.getElementById('colors-empty');
-
-          if (!data || data.length === 0) {
-            resultsContainer.classList.add('hidden');
-            emptyState.innerHTML = `
-          <span class="empty-icon">✅</span>
-          <div>No detached colors found! Your design system is clean.</div>
-        `;
-            return;
-          }
-
-          emptyState.classList.add('hidden');
-          resultsContainer.classList.remove('hidden');
-
-          const html = data.map(item => {
-            return item.issues.map(issue => {
-              const isType = issue.type === 'typography';
-              const displayDetail = isType ? 'Missing Text Style' : `${issue.property}: ${issue.color}`;
-              const displaySwatch = isType ?
-                `<div class="color-swatch" style="background: var(--bg-secondary); color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border: 1px solid var(--border-color);">Ag</div>` :
-                `<div class="color-swatch" style="background: ${issue.color};"></div>`;
-
-              return `
-          <div class="result-item">
-            ${displaySwatch}
-            <div class="result-info">
-              <div class="result-name">${escapeHtml(item.name)}</div>
-              <div class="result-detail">${displayDetail}</div>
-              ${issue.suggestion ? `
-                <div class="suggestion-box" style="margin-top: 6px; padding: 6px 8px; background: rgba(13, 153, 255, 0.08); border-radius: 4px; border-left: 2px solid var(--accent-primary);">
-                  <div style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
-                    <div class="color-swatch" style="width: 14px; height: 14px; background: ${issue.suggestion.hex};"></div>
-                    <div style="flex: 1;">
-                      <div style="font-weight: 600; color: var(--text-primary);">💡 Suggested: ${escapeHtml(issue.suggestion.name)}</div>
-                      <div style="color: var(--text-secondary); font-size: 10px;">${issue.suggestion.similarity}% match</div>
-                    </div>
-                  </div>
-                </div>
-              ` : ''}
+      cats.forEach(({ key, label, badge }) => {
+        const items = errors[key];
+        if (!items || items.length === 0) return;
+        html += `
+          <div class="issue-cat">
+            <div class="issue-cat-header">
+              <div class="issue-cat-title">${label}</div>
+              <span class="badge ${badge}">${items.length}</span>
             </div>
-            <button class="locate-btn" data-node-id="${item.id}" title="Locate & Zoom">
-              🎯
-            </button>
-          </div>
-        `;
-            }).join('');
-          }).join('');
-
-          resultsContainer.innerHTML = html;
-
-          // Add click handlers for locate buttons
-          resultsContainer.querySelectorAll('.locate-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const nodeId = btn.getAttribute('data-node-id');
-              parent.postMessage({
-                pluginMessage: {
-                  type: 'locate-node',
-                  nodeId: nodeId
-                }
-              }, '*');
-            });
-          });
-        }
-
-        function renderQualityAudit(healthScore, errors, totalChecks, passedChecks, improvementTips) {
-          const resultsContainer = document.getElementById('audit-results');
-          const emptyState = document.getElementById('audit-empty');
-          const scoreCircle = document.getElementById('score-circle');
-          const scoreValue = document.getElementById('score-value');
-          const errorList = document.getElementById('error-list');
-
-          emptyState.classList.add('hidden');
-          resultsContainer.classList.remove('hidden');
-
-          // Update health score
-          scoreValue.textContent = healthScore;
-          const degrees = (healthScore / 100) * 360;
-          const color = healthScore >= 80 ? '#00D084' : healthScore >= 50 ? '#FFA629' : '#FF5C5C';
-          scoreCircle.style.background = `conic - gradient(${color} ${degrees}deg, var(--bg - tertiary) ${degrees}deg)`;
-
-          // Render error categories with clickable items
-          let errorHtml = '';
-
-          if (errors.missingAltText.length > 0) {
-            errorHtml += `
-            < div class="error-category" >
-            <div class="error-header">
-              <span class="error-title">Missing Alt Text</span>
-              <span class="error-count">${errors.missingAltText.length}</span>
-            </div>
-            <div class="error-items-list">
-              ${errors.missingAltText.map(e => `
-                <div class="error-item" onclick="locateNode('${e.id}')">
-                  <span class="error-icon">🎯</span>
-                  <div style="flex: 1;">
-                    <div class="error-name">${escapeHtml(e.name)}</div>
-                    ${e.suggestion ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">💡 ${e.suggestion}</div>` : ''}
-                  </div>
-                  <span class="error-action">→</span>
+            <div class="issue-items">
+              ${items.map(e => `
+                <div class="issue-item" onclick="locateNode('${e.id}')">
+                  <span class="issue-item-name">${escHtml(e.name)}</span>
+                  <span class="issue-item-arrow">→</span>
                 </div>
               `).join('')}
             </div>
-          </div >
-            `;
-          }
+          </div>`;
+      });
 
-          if (errors.defaultNames.length > 0) {
-            errorHtml += `
-            < div class="error-category" >
-            <div class="error-header">
-              <span class="error-title">Default Layer Names</span>
-              <span class="error-count">${errors.defaultNames.length}</span>
+      if (improvementTips && improvementTips.length > 0) {
+        html += `
+          <div class="issue-cat">
+            <div class="issue-cat-header">
+              <div class="issue-cat-title">💡 Tips</div>
             </div>
-            <div class="error-items-list">
-              ${errors.defaultNames.map(e => `
-                <div class="error-item" onclick="locateNode('${e.id}')">
-                  <span class="error-icon">🎯</span>
-                  <span class="error-name">${escapeHtml(e.name)}</span>
-                  <span class="error-action">→</span>
-                </div>
-              `).join('')}
+            <div style="padding-top:6px; display:flex; flex-direction:column; gap:4px;">
+              ${improvementTips.map(t => `<div style="font-size:11px; color:var(--text-2); padding-left:4px;">• ${t}</div>`).join('')}
             </div>
-          </div >
-            `;
-          }
+          </div>`;
+      }
 
-          if (errors.poorContrast.length > 0) {
-            errorHtml += `
-            < div class="error-category" >
-            <div class="error-header">
-              <span class="error-title">Potential Contrast Issues</span>
-              <span class="error-count">${errors.poorContrast.length}</span>
-            </div>
-            <div class="error-items-list">
-              ${errors.poorContrast.map(e => `
-                <div class="error-item" onclick="locateNode('${e.id}')">
-                  <span class="error-icon">🎯</span>
-                  <div style="flex: 1;">
-                    <div class="error-name">${escapeHtml(e.name)}</div>
-                    ${e.suggestion ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">💡 ${e.suggestion}</div>` : ''}
-                  </div>
-                  <span class="error-action">→</span>
-                </div>
-              `).join('')}
-            </div>
-          </div >
-            `;
-          }
+      if (!html) {
+        html = `<div class="empty"><div class="empty-icon">🎉</div><p style="margin-top:6px;">No issues found — your file is clean!</p></div>`;
+      }
 
-          // Add improvement tips section
-          if (improvementTips && improvementTips.length > 0) {
-            errorHtml += `
-            < div style = "margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid var(--color-primary);" >
-              <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">💡 How to Improve Your Health Score</div>
-            ${improvementTips.map(tip => `
-              <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; padding-left: 8px;">• ${tip}</div>
-            `).join('')
-              }
-          </div >
-            `;
-          }
+      errorList.innerHTML = html;
+    }
 
-          if (errorHtml === '') {
-            errorHtml = `
-            < div class="empty-state" >
-            <span class="empty-icon">🎉</span>
-            <div>Perfect! No issues found.</div>
-          </div >
-            `;
-          }
+    // ─── Locate node ─────────────────────────────────────────────────
+    function locateNode(nodeId) {
+      parent.postMessage({ pluginMessage: { type: 'locate-node', nodeId } }, '*');
+    }
 
-          errorList.innerHTML = errorHtml;
-        }
+    // ─── Loading states ───────────────────────────────────────────────
+    function setLoading(btn, on) {
+      btn.classList.toggle('loading', on);
+      btn.disabled = on;
+    }
 
-        // ========================================
-        // LOCATE NODE FUNCTION
-        // ========================================
-        function locateNode(nodeId) {
-          parent.postMessage({
-            pluginMessage: {
-              type: 'locate-node',
-              nodeId: nodeId
-            }
-          }, '*');
-        }
+    // ─── Toast ───────────────────────────────────────────────────────
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const dot = document.getElementById('toast-dot');
+      const msgEl = document.getElementById('toast-message');
 
-        // ========================================
-        // MESSAGE HANDLER FROM BACKEND
-        // ========================================
-        window.onmessage = (event) => {
-          const msg = event.data.pluginMessage;
+      const colors = { success: 'var(--green)', error: 'var(--red)', info: 'var(--blue)' };
+      dot.style.background = colors[type] || colors.success;
+      msgEl.textContent = message;
+      toast.classList.add('show');
 
-          switch (msg.type) {
-            case 'auto-rename-complete':
-              setButtonLoading(autoRenameBtn, false);
-              if (msg.stats && Object.values(msg.stats).some(v => v > 0)) {
-                const statsText = Object.entries(msg.stats)
-                  .filter(([_, count]) => count > 0)
-                  .map(([type, count]) => `${count} ${type} `)
-                  .join(', ');
-                showToast(`✅ Renamed ${msg.count} layers: ${statsText} `, 'success');
-              } else {
-                showToast(`✅ Renamed ${msg.count} layers successfully!`, 'success');
-              }
-              break;
-          }
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
 
-          if (msg.type === 'grouping-complete') {
-            setButtonLoading(smartGroupingBtn, false);
-            const groupText = msg.groups.join(', ');
-            showToast('📁', `Grouped ${msg.count} layers into: ${groupText} `);
-          }
+    // ─── Message handler ─────────────────────────────────────────────
+    window.onmessage = event => {
+      const msg = event.data?.pluginMessage;
+      if (!msg) return;
 
-          if (msg.type === 'hidden-layers-removed') {
-            const removeHiddenBtn = document.getElementById('remove-hidden-btn');
-            setButtonLoading(removeHiddenBtn, false);
-            showToast('🗑️', `Removed ${msg.count} hidden layer${msg.count !== 1 ? 's' : ''} `);
-          }
+      try {
+        switch (msg.type) {
 
-          if (msg.type === 'redundant-removed') {
-            setButtonLoading(document.getElementById('remove-redundant-btn'), false);
-            showToast('📦', `Flattened ${msg.count} redundant wrappers`);
-          }
-
-          if (msg.type === 'detached-colors-found') {
-            setButtonLoading(scanColorsBtn, false);
-            renderDetachedColors(msg.data);
-            if (msg.data && msg.data.length > 0) {
-              showToast('🎨', `Found ${msg.data.length} layer${msg.data.length !== 1 ? 's' : ''} with detached colors`);
+          case 'auto-rename-complete':
+            setLoading(autoRenameBtn, false);
+            if (msg.count > 0) {
+              showToast(`Renamed ${msg.count} layer${msg.count !== 1 ? 's' : ''}`, 'success');
             } else {
-              showToast('✅', 'No detached colors found!');
+              showToast('No layers renamed', 'info');
             }
-          }
+            break;
 
-          if (msg.type === 'quality-audit-complete') {
-            setButtonLoading(auditBtn, false);
+          case 'hidden-layers-removed':
+            setLoading(removeHiddenBtn, false);
+            showToast(`Removed ${msg.count} hidden layer${msg.count !== 1 ? 's' : ''}`, 'success');
+            break;
+
+          case 'redundant-removed':
+            setLoading(removeRedundantBtn, false);
+            showToast(`Flattened ${msg.count} wrapper${msg.count !== 1 ? 's' : ''}`, 'success');
+            break;
+
+          case 'quality-audit-complete':
+            setLoading(auditBtn, false);
             renderQualityAudit(msg.healthScore, msg.errors, msg.totalChecks, msg.passedChecks, msg.improvementTips);
-            showToast('🛡️', `Health Score: ${msg.healthScore}/100`);
-          }
+            showToast(`Health score: ${msg.healthScore}/100`, msg.healthScore >= 80 ? 'success' : 'info');
+            break;
 
-          if (msg.type === 'status-applied') {
-            setButtonLoading(applyStatusBtn, false);
-            showToast('🚀', `Status applied to ${msg.count} frame${msg.count !== 1 ? 's' : ''}`);
-          }
+          case 'node-located':
+            showToast(`Located: ${msg.nodeName}`, 'info');
+            break;
 
-          if (msg.type === 'error') {
-            setButtonLoading(autoRenameBtn, false);
-            setButtonLoading(scanColorsBtn, false);
-            setButtonLoading(auditBtn, false);
-            setButtonLoading(applyStatusBtn, false);
-            showToast('❌', msg.message);
-          }
-
-          if (msg.type === 'node-located') {
-            showToast('🎯', `Located: ${msg.nodeName}`);
-          }
-
-          if (msg.type === 'load-preferences') {
-            if (msg.tab && msg.tab !== currentTab) {
-              const targetButton = document.querySelector(`[data-tab="${msg.tab}"]`);
-              if (targetButton) {
-                targetButton.click();
-              }
+          case 'load-preferences':
+            if (msg.tab) {
+              const btn = document.querySelector(`[data-tab="${msg.tab}"]`);
+              if (btn) btn.click();
             }
-          }
+            break;
 
-          if (msg.type === 'region-assigned') {
-            const region = msg.region; // 'header', 'body', 'footer'
-            const statusEl = document.getElementById(`status-${region}`);
-            const zoneEl = document.getElementById(`zone-${region}`);
+          case 'scan-frame-result': {
+            setLoading(scanBtn, false);
+            const s = msg.stats;
 
-            if (statusEl) statusEl.classList.remove('hidden');
-            if (zoneEl) zoneEl.classList.add('assigned');
 
-            showToast('✅', `Assigned ${region} successfully`);
+            // Update header
+            document.getElementById('inspect-root-name').textContent = msg.rootName || 'Frame Inspector';
+            document.getElementById('inspect-root-sub').textContent =
+              `${s.total} layers scanned`;
 
-            // Enable auto-structure if body is assigned
-            if (region === 'body') {
-              const autoBtn = document.getElementById('auto-structure-btn');
-              if (autoBtn) autoBtn.disabled = false;
-            }
-          }
-
-          if (msg.type === 'structure-complete') {
-            setButtonLoading(document.getElementById('auto-structure-btn'), false);
-            showToast('🏗️', `Structured ${msg.count} items in Body`);
-          }
-
-          // Settings & Undo/Redo message handlers
-          if (msg.type === 'settings-loaded') {
-            const s = msg.settings;
-            document.getElementById('setting-achievements-enabled').checked = s.achievements.enabled;
-            document.getElementById('setting-threshold-first').value = s.achievements.thresholds.first;
-            document.getElementById('setting-threshold-novice').value = s.achievements.thresholds.novice;
-            document.getElementById('setting-threshold-expert').value = s.achievements.thresholds.expert;
-            document.getElementById('setting-threshold-master').value = s.achievements.thresholds.master;
-            document.getElementById('setting-default-casing').value = s.naming.defaultCasing;
-            document.getElementById('setting-default-convention').value = s.naming.defaultConvention;
-            document.getElementById('setting-show-advanced').checked = s.modules.showAdvancedOptions;
-            document.getElementById('setting-remember-tab').checked = s.modules.rememberTab;
-
-            // Update achievement thresholds disabled state
-            const thresholdsGroup = document.getElementById('achievement-thresholds');
-            if (thresholdsGroup) {
-              thresholdsGroup.classList.toggle('disabled', !s.achievements.enabled);
-            }
-          }
-
-          if (msg.type === 'settings-saved') {
-            showToast('✅', 'Settings saved successfully');
-          }
-
-          if (msg.type === 'settings-reset') {
-            showToast('🔄', 'Settings reset to defaults');
-            // Reload settings in modal
-            parent.postMessage({ pluginMessage: { type: 'load-settings' } }, '*');
-          }
-
-          if (msg.type === 'history-updated') {
-            const undoBtn = document.getElementById('undo-btn');
-            const redoBtn = document.getElementById('redo-btn');
-            if (undoBtn) undoBtn.disabled = !msg.canUndo;
-            if (redoBtn) redoBtn.disabled = !msg.canRedo;
-          }
-
-          if (msg.type === 'auto-rename-complete') {
-            setButtonLoading(autoRenameBtn, false);
-            showToast('✅', `Renamed ${msg.count} layer(s)`);
-
-            // Update undo/redo buttons
-            const undoBtn = document.getElementById('undo-btn');
-            const redoBtn = document.getElementById('redo-btn');
-            if (undoBtn) undoBtn.disabled = !msg.canUndo;
-            if (redoBtn) redoBtn.disabled = !msg.canRedo;
-          }
-        };
-
-        // ========================================
-        // UTILITY FUNCTIONS
-        // ========================================
-        function escapeHtml(text) {
-          const div = document.createElement('div');
-          div.textContent = text;
-          return div.innerHTML;
-        }
-
-        // ========================================
-        // SETTINGS & UNDO/REDO EVENT HANDLERS
-        // ========================================
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const modalClose = document.querySelector('.modal-close');
-        const saveSettingsBtn = document.getElementById('settings-save-btn');
-        const resetSettingsBtn = document.getElementById('settings-reset-btn');
-        const undoBtn = document.getElementById('undo-btn');
-        const redoBtn = document.getElementById('redo-btn');
-
-        // Open settings modal
-        settingsBtn?.addEventListener('click', () => {
-          settingsModal?.classList.add('show');
-          parent.postMessage({ pluginMessage: { type: 'load-settings' } }, '*');
-        });
-
-        // Close settings modal
-        modalClose?.addEventListener('click', () => {
-          settingsModal?.classList.remove('show');
-        });
-
-        // Close on overlay click
-        settingsModal?.addEventListener('click', (e) => {
-          if (e.target === settingsModal) {
-            settingsModal.classList.remove('show');
-          }
-        });
-
-        // Save settings
-        saveSettingsBtn?.addEventListener('click', () => {
-          const settings = {
-            achievements: {
-              enabled: document.getElementById('setting-achievements-enabled') ? document.getElementById('setting-achievements-enabled').checked : true,
-              thresholds: {
-                first: parseInt(document.getElementById('setting-threshold-first') ? document.getElementById('setting-threshold-first').value : '1') || 1,
-                novice: parseInt(document.getElementById('setting-threshold-novice') ? document.getElementById('setting-threshold-novice').value : '10') || 10,
-                expert: parseInt(document.getElementById('setting-threshold-expert') ? document.getElementById('setting-threshold-expert').value : '50') || 50,
-                master: parseInt(document.getElementById('setting-threshold-master') ? document.getElementById('setting-threshold-master').value : '100') || 100
-              }
-            },
-            naming: {
-              defaultCasing: document.getElementById('setting-default-casing') ? document.getElementById('setting-default-casing').value : 'pascal',
-              defaultConvention: document.getElementById('setting-default-convention') ? document.getElementById('setting-default-convention').value : 'atomic'
-            },
-            modules: {
-              showAdvancedOptions: document.getElementById('setting-show-advanced') ? document.getElementById('setting-show-advanced').checked : false,
-              rememberTab: document.getElementById('setting-remember-tab') ? document.getElementById('setting-remember-tab').checked : false
-            }
-          };
-
-          parent.postMessage({ pluginMessage: { type: 'save-settings', settings: settings } }, '*');
-          if (settingsModal) settingsModal.classList.remove('show');
-        });
-
-        // ========================================
-        // ADVANCED RENAMING - EVENT HANDLERS
-        // ========================================
-
-        // Checkbox toggles for advanced options
-        var enableSequential = document.getElementById('enable-sequential');
-        var sequentialControls = document.getElementById('sequential-controls');
-        if (enableSequential && sequentialControls) {
-          enableSequential.addEventListener('change', function () {
-            sequentialControls.style.display = this.checked ? 'block' : 'none';
-          });
-        }
-
-        var enableFindReplace = document.getElementById('enable-find-replace');
-        var findReplaceControls = document.getElementById('find-replace-controls');
-        if (enableFindReplace && findReplaceControls) {
-          enableFindReplace.addEventListener('change', function () {
-            findReplaceControls.style.display = this.checked ? 'block' : 'none';
-          });
-        }
-
-        var enablePrefixSuffix = document.getElementById('enable-prefix-suffix');
-        var prefixSuffixControls = document.getElementById('prefix-suffix-controls');
-        if (enablePrefixSuffix && prefixSuffixControls) {
-          enablePrefixSuffix.addEventListener('change', function () {
-            prefixSuffixControls.style.display = this.checked ? 'block' : 'none';
-          });
-        }
-
-        // Preview modal elements
-        var previewModal = document.getElementById('preview-modal');
-        var closePreview = document.getElementById('close-preview');
-        var cancelPreview = document.getElementById('cancel-preview');
-        var applyPreview = document.getElementById('apply-preview');
-        var previewList = document.getElementById('preview-list');
-        var previewCount = document.getElementById('preview-count');
-        var currentPreviews = [];
-
-        // Close preview modal handlers
-        if (closePreview) {
-          closePreview.addEventListener('click', function () {
-            previewModal.style.display = 'none';
-          });
-        }
-
-        if (cancelPreview) {
-          cancelPreview.addEventListener('click', function () {
-            previewModal.style.display = 'none';
-          });
-        }
-
-        if (previewModal) {
-          previewModal.addEventListener('click', function (e) {
-            if (e.target === previewModal) {
-              previewModal.style.display = 'none';
-            }
-          });
-        }
-
-        // Helper function to collect rename options
-        function collectRenameOptions() {
-          var options = {
-            convention: document.getElementById('convention-select') ? document.getElementById('convention-select').value : 'semantic',
-            casing: document.getElementById('casing-select') ? document.getElementById('casing-select').value : 'kebab',
-            filters: {}
-          };
-
-          if (enableSequential && enableSequential.checked) {
-            options.sequential = {
-              enabled: true,
-              start: parseInt(document.getElementById('seq-start').value) || 1,
-              padding: parseInt(document.getElementById('seq-padding').value) || 2,
-              position: document.getElementById('seq-position').value || 'suffix'
-            };
-          }
-
-          if (enableFindReplace && enableFindReplace.checked) {
-            var findText = document.getElementById('find-text').value;
-            if (findText) {
-              options.findReplace = {
-                enabled: true,
-                find: findText,
-                replace: document.getElementById('replace-text').value || '',
-                caseSensitive: document.getElementById('case-sensitive').checked
-              };
-            }
-          }
-
-          if (enablePrefixSuffix && enablePrefixSuffix.checked) {
-            var prefix = document.getElementById('prefix-text').value;
-            var suffix = document.getElementById('suffix-text').value;
-            if (prefix || suffix) {
-              options.prefixSuffix = {
-                enabled: true,
-                prefix: prefix || '',
-                suffix: suffix || ''
-              };
-            }
-          }
-
-          return options;
-        }
-
-        // Preview button handler
-        var previewBtn = document.getElementById('preview-rename-btn');
-        if (previewBtn) {
-          previewBtn.addEventListener('click', function () {
-            console.log('Preview button clicked');
-            var options = collectRenameOptions();
-            console.log('Options:', options);
-            parent.postMessage({ pluginMessage: { type: 'preview-rename', options: options } }, '*');
-          });
-        }
-
-        // Apply button handler
-        var applyBtn = document.getElementById('apply-rename-btn');
-        if (applyBtn) {
-          applyBtn.addEventListener('click', function () {
-            console.log('Apply button clicked');
-            var options = collectRenameOptions();
-            parent.postMessage({ pluginMessage: { type: 'preview-rename', options: options } }, '*');
-          });
-        }
-
-        // Apply preview handler
-        if (applyPreview) {
-          applyPreview.addEventListener('click', function () {
-            console.log('Applying preview changes');
-            if (currentPreviews.length > 0) {
-              parent.postMessage({ pluginMessage: { type: 'apply-preview', changes: currentPreviews } }, '*');
-              previewModal.style.display = 'none';
-            }
-          });
-        }
-
-        // Preset button handlers
-        var presetBtns = document.querySelectorAll('.preset-btn');
-        console.log('Found preset buttons:', presetBtns.length);
-        for (var i = 0; i < presetBtns.length; i++) {
-          presetBtns[i].addEventListener('click', function () {
-            var preset = this.getAttribute('data-preset');
-            console.log('Preset clicked:', preset);
-            parent.postMessage({ pluginMessage: { type: 'apply-preset', preset: preset } }, '*');
-          });
-        }
-
-        // Handle preview response from backend
-        window.addEventListener('message', function (event) {
-          var msg = event.data.pluginMessage;
-          if (!msg) return;
-
-          if (msg.type === 'rename-preview') {
-            console.log('Received preview:', msg);
-            if (msg.error) {
-              showToast(msg.error, 'error');
-              return;
+            // Helper: set value + colour
+            function setStat(id, val, highlightIfNonZero = false) {
+              const el = document.getElementById(id);
+              if (!el) return;
+              el.textContent = val;
+              el.classList.toggle('zero', val === 0);
+              el.classList.toggle('accent', highlightIfNonZero && val > 0);
             }
 
-            currentPreviews = msg.previews;
-
-            previewList.innerHTML = '';
-            if (msg.previews.length === 0) {
-              previewList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">No changes to preview</p>';
-            } else {
-              for (var i = 0; i < msg.previews.length; i++) {
-                var preview = msg.previews[i];
-                var item = document.createElement('div');
-                item.style.cssText = 'padding: 8px 12px; margin-bottom: 6px; background: var(--bg-tertiary); border-radius: 4px; border-left: 3px solid var(--accent-primary);';
-                item.innerHTML = '<div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">' + preview.oldName + '</div>' +
-                  '<div style="font-size: 11px; color: var(--accent-primary); font-weight: 600;">→ ' + preview.newName + '</div>';
-                previewList.appendChild(item);
-              }
-            }
-
-            previewCount.textContent = msg.previews.length;
-            previewModal.style.display = 'flex';
+            setStat('stat-total', s.total);
+            setStat('stat-hidden', s.hidden, true);
+            setStat('stat-locked', s.locked);
+            setStat('stat-unnamed', s.unnamed, true);
+            setStat('stat-empty', s.empty);
+            setStat('stat-nested', s.deeplyNested, true);
+            break;
           }
-        });
 
-        console.log('Advanced renaming event handlers initialized');
+          case 'toast':
+            showToast(msg.message || '', 'info');
+            break;
+
+          case 'error':
+            setLoading(autoRenameBtn, false);
+            setLoading(auditBtn, false);
+            if (removeHiddenBtn) setLoading(removeHiddenBtn, false);
+            if (removeRedundantBtn) setLoading(removeRedundantBtn, false);
+            if (scanBtn) setLoading(scanBtn, false);
+            showToast(msg.message || 'An error occurred', 'error');
+            break;
 
 
-        // Reset settings
-        resetSettingsBtn?.addEventListener('click', () => {
-          if (confirm('Reset all settings to defaults?')) {
-            parent.postMessage({ pluginMessage: { type: 'reset-settings' } }, '*');
-          }
-        });
+          default:
+            break;
+        }
+      } catch (err) {
+        console.error('[ui] message handler error', msg.type, err);
+        try { setLoading(autoRenameBtn, false); } catch (_) { }
+      }
+    };
 
-        // Undo button
-        undoBtn?.addEventListener('click', () => {
-          parent.postMessage({ pluginMessage: { type: 'undo' } }, '*');
-        });
+    // ─── Helpers ─────────────────────────────────────────────────────
+    function escHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
 
-        // Redo button
-        redoBtn?.addEventListener('click', () => {
-          parent.postMessage({ pluginMessage: { type: 'redo' } }, '*');
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-          // Cmd/Ctrl + Z = Undo
-          if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
-            e.preventDefault();
-            parent.postMessage({ pluginMessage: { type: 'undo' } }, '*');
-          }
-          // Cmd/Ctrl + Shift + Z = Redo
-          if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
-            e.preventDefault();
-            parent.postMessage({ pluginMessage: { type: 'redo' } }, '*');
-          }
-        });
-
-        // Toggle achievement thresholds based on enabled checkbox
-        document.getElementById('setting-achievements-enabled')?.addEventListener('change', (e) => {
-          const thresholdsGroup = document.getElementById('achievement-thresholds');
-          if (thresholdsGroup) {
-            thresholdsGroup.classList.toggle('disabled', !e.target.checked);
-          }
-        });
-
-        // ========================================
-        // INITIALIZATION
-        // ========================================
-        parent.postMessage({
-          pluginMessage: { type: 'load-preferences' }
-        }, '*');
-      </script>
-
-      <!-- Settings Modal -->
-      <div id="settings-modal" class="modal-overlay" role="dialog" aria-labelledby="settings-title" aria-modal="true">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 id="settings-title">Settings</h2>
-            <button class="modal-close" aria-label="Close settings">✕</button>
-          </div>
-
-          <div class="modal-body">
-            <!-- Achievement Settings -->
-            <section class="settings-section">
-              <h3 class="settings-section-title">🏆 Achievement Settings</h3>
-
-              <label class="settings-toggle">
-                <input type="checkbox" id="setting-achievements-enabled" checked>
-                <span>Enable Easter Egg Achievements</span>
-              </label>
-
-              <div class="settings-group" id="achievement-thresholds">
-                <label class="settings-label">
-                  <span>First Steps (layers renamed)</span>
-                  <input type="number" id="setting-threshold-first" value="1" min="1" max="100">
-                </label>
-
-                <label class="settings-label">
-                  <span>Layer Novice</span>
-                  <input type="number" id="setting-threshold-novice" value="10" min="1" max="100">
-                </label>
-
-                <label class="settings-label">
-                  <span>Organization Expert</span>
-                  <input type="number" id="setting-threshold-expert" value="50" min="1" max="200">
-                </label>
-
-                <label class="settings-label">
-                  <span>Layer Master</span>
-                  <input type="number" id="setting-threshold-master" value="100" min="1" max="500">
-                </label>
-              </div>
-            </section>
-
-            <!-- Naming Preferences -->
-            <section class="settings-section">
-              <h3 class="settings-section-title">🏷️ Naming Preferences</h3>
-
-              <label class="settings-label">
-                <span>Default Casing</span>
-                <select id="setting-default-casing" class="settings-select">
-                  <option value="pascal">PascalCase</option>
-                  <option value="kebab">kebab-case</option>
-                  <option value="camel">camelCase</option>
-                  <option value="snake">snake_case</option>
-                </select>
-              </label>
-
-              <label class="settings-label">
-                <span>Default Convention</span>
-                <select id="setting-default-convention" class="settings-select">
-                  <option value="atomic">Atomic Design</option>
-                  <option value="slash">Slash Structure</option>
-                  <option value="bem">BEM Style</option>
-                  <option value="architect">Architect Mode</option>
-                </select>
-              </label>
-            </section>
-
-            <!-- Module Defaults -->
-            <section class="settings-section">
-              <h3 class="settings-section-title">⚙️ Module Defaults</h3>
-
-              <label class="settings-toggle">
-                <input type="checkbox" id="setting-show-advanced">
-                <span>Show Advanced Options by Default</span>
-              </label>
-
-              <label class="settings-toggle">
-                <input type="checkbox" id="setting-remember-tab">
-                <span>Remember Last Active Tab</span>
-              </label>
-            </section>
-          </div>
-
-          <div class="modal-footer">
-            <button id="settings-reset-btn" class="btn btn-secondary">Reset to Defaults</button>
-            <button id="settings-save-btn" class="btn btn-primary">Save Settings</button>
-          </div>
-        </div>
-      </div>
-
+    function announceToScreenReader(msg) {
+      const el = document.getElementById('sr-announcements');
+      if (el) { el.textContent = msg; setTimeout(() => el.textContent = '', 1000); }
+    }
+  </script>
 </body>
-
 
 </html>

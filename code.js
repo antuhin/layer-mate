@@ -367,8 +367,8 @@ async function generateNameWithOptions(node, options, index) {
   return name;
 }
 
-// Helper to collect renameable nodes
-function collectRenameableNodes(node, result, filters) {
+// Helper to collect renameable nodes (used by generateRenamePreview)
+function collectRenameableNodesSimple(node, result) {
   // Skip locked nodes
   if (node.locked) return;
 
@@ -380,7 +380,7 @@ function collectRenameableNodes(node, result, filters) {
   // Recursively collect from children
   if ('children' in node) {
     for (var i = 0; i < node.children.length; i++) {
-      collectRenameableNodes(node.children[i], result, filters);
+      collectRenameableNodesSimple(node.children[i], result);
     }
   }
 }
@@ -395,7 +395,7 @@ async function generateRenamePreview(options) {
 
   var nodesToRename = [];
   for (var i = 0; i < selection.length; i++) {
-    collectRenameableNodes(selection[i], nodesToRename, options.filters || {});
+    collectRenameableNodesSimple(selection[i], nodesToRename);
   }
 
   if (nodesToRename.length === 0) {
@@ -603,10 +603,16 @@ figma.ui.onmessage = async (msg) => {
         handleAssignRegion(msg.region);
         break;
 
+      // MODULE: INSPECT — Frame Stats Scanner
+      case 'scan-frame':
+        await handleScanFrame();
+        break;
+
       // MODULE 3: THE LINTER (Lead Level)
       case 'quality-audit':
         await handleQualityAudit();
         break;
+
 
       // MODULE 4: THE HANDOFF MANAGER (Manager Level)
       case 'set-frame-status':
@@ -703,56 +709,64 @@ async function handleAutoRename(casing = 'pascal', convention = 'atomic', filter
     return;
   }
 
-  // CAPTURE STATE BEFORE RENAMING (for undo)
-  const state = undoManager.captureState('rename', nodesToRename);
-
-  // Rename all collected nodes
   let renamedCount = 0;
-  const stats = {
-    text: 0,
-    shape: 0,
-    img: 0,
-    item: 0,
-    container: 0,
-    section: 0,
-    block: 0
-  };
+  const stats = { text: 0, shape: 0, img: 0, item: 0, container: 0, section: 0, block: 0 };
 
-  for (const node of nodesToRename) {
-    const newName = await generateName(node, casing, convention);
-    if (newName && newName !== node.name) {
-      node.name = newName;
-      renamedCount++;
+  try {
+    // CAPTURE STATE BEFORE RENAMING (for undo)
+    const state = undoManager.captureState('rename', nodesToRename);
 
-      // Track stats
-      const nameLower = newName.toLowerCase();
-      if (nameLower.includes('text')) stats.text++;
-      else if (nameLower.includes('shape')) stats.shape++;
-      else if (nameLower.includes('img')) stats.img++;
-      else if (nameLower.includes('item')) stats.item++;
-      else if (nameLower.includes('container')) stats.container++;
-      else if (nameLower.includes('section')) stats.section++;
-      else if (nameLower.includes('block')) stats.block++;
+    for (const node of nodesToRename) {
+      try {
+        const newName = await generateName(node, casing, convention);
+        if (newName && newName !== node.name) {
+          node.name = newName;
+          renamedCount++;
+          // Track stats
+          const nameLower = newName.toLowerCase();
+          if (nameLower.includes('text')) stats.text++;
+          else if (nameLower.includes('shape')) stats.shape++;
+          else if (nameLower.includes('img')) stats.img++;
+          else if (nameLower.includes('item')) stats.item++;
+          else if (nameLower.includes('container')) stats.container++;
+          else if (nameLower.includes('section')) stats.section++;
+          else if (nameLower.includes('block')) stats.block++;
+        }
+      } catch (nodeErr) {
+        // Skip this node if something goes wrong, continue with others
+        console.error('Error renaming node:', node.name, nodeErr);
+      }
+    }
+
+    // UPDATE STATE AFTER RENAMING (for undo)
+    undoManager.updateState(state, nodesToRename);
+  } finally {
+    // ALWAYS send completion — spinner must never be left stuck
+    figma.ui.postMessage({
+      type: 'auto-rename-complete',
+      count: renamedCount,
+      stats: stats,
+      canUndo: undoManager.canUndo(),
+      canRedo: undoManager.canRedo()
+    });
+
+    if (renamedCount > 0) {
+      figma.notify(`✅ Renamed ${renamedCount} layer${renamedCount !== 1 ? 's' : ''}`);
+    } else {
+      figma.notify('No layers renamed (already named correctly or filtered out)');
     }
   }
-
-  // UPDATE STATE AFTER RENAMING (for undo)
-  undoManager.updateState(state, nodesToRename);
-
-  // Send completion message with undo/redo status
-  figma.ui.postMessage({
-    type: 'auto-rename-complete',
-    count: renamedCount,
-    stats: stats,
-    canUndo: undoManager.canUndo(),
-    canRedo: undoManager.canRedo()
-  });
 }
 
 // ========================================
 // HELPER: COLLECT RENAMEABLE NODES WITH FILTERS
 // ========================================
 function collectRenameableNodes(node, collection, filters = {}) {
+  // Always skip components, component sets, and instances — never rename or traverse into them
+  if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET' || node.type === 'INSTANCE') {
+    return;
+  }
+
   // Apply smart filters
   if (shouldSkipNode(node, filters)) {
     return;
@@ -761,7 +775,7 @@ function collectRenameableNodes(node, collection, filters = {}) {
   // Add node to collection
   collection.push(node);
 
-  // Recursively collect children
+  // Recursively collect children (instances already returned above, so this is safe)
   if ('children' in node) {
     for (const child of node.children) {
       collectRenameableNodes(child, collection, filters);
@@ -789,6 +803,31 @@ function shouldSkipNode(node, filters) {
   }
 
   return false;
+}
+
+// ========================================
+// HELPER: RESOLVE TEXT STYLE (Local or Remote)
+// Uses a timeout to prevent importStyleByKeyAsync from hanging
+// ========================================
+async function resolveTextStyle(textStyleId) {
+  // 1. Try local style first (synchronous, instant)
+  try {
+    const local = figma.getStyleById(textStyleId);
+    if (local && local.name) return local;
+  } catch (e) { }
+
+  // 2. Try remote/library style import with a 3-second timeout
+  try {
+    const matches = textStyleId.match(/^S:([^,]+)/);
+    if (!matches || !matches[1]) return null;
+
+    const importPromise = figma.importStyleByKeyAsync(matches[1]);
+    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
+    const style = await Promise.race([importPromise, timeoutPromise]);
+    if (style && style.name) return style;
+  } catch (e) { }
+
+  return null;
 }
 
 // ========================================
@@ -1396,10 +1435,66 @@ async function handleRemoveRedundantWrappers() {
 // Career Stage: Lead Designer
 // Focus: Quality Control
 // Why: Leads ensure quality across the team. This audit catches
-// common mistakes: missing alt text (accessibility), default names
-// (poor organization), and contrast issues (usability).
 // ========================================
+// INSPECT — Frame Stats Scanner
+// Scans the selected frame (or the current page) and returns
+// counts for: total layers, hidden, locked, unnamed (default
+// names like "Frame 1", "Group 2", "Rectangle 3"), empty
+// frames/groups, and deeply nested layers (depth > 4).
+// ========================================
+async function handleScanFrame() {
+  // Determine root: use the first selected node, or fall back to the whole page
+  const selection = figma.currentPage.selection;
+  const root = selection.length > 0 ? selection[0] : figma.currentPage;
+
+  const DEFAULT_NAME_RE = /^(Frame|Group|Rectangle|Ellipse|Line|Vector|Polygon|Star|Component|Image|Text|Section)\s+\d+$/i;
+
+  let total = 0;
+  let hidden = 0;
+  let locked = 0;
+  let unnamed = 0;
+  let empty = 0;
+  let deeplyNested = 0;
+
+  function walk(node, depth) {
+    // Don't count the root itself — only its descendants
+    if (node !== root) {
+      total++;
+      if ('visible' in node && !node.visible) hidden++;
+      if ('locked' in node && node.locked) locked++;
+      if (DEFAULT_NAME_RE.test(node.name)) unnamed++;
+      if (depth > 4) deeplyNested++;
+
+      const hasChildren = 'children' in node && node.children.length === 0;
+      const isContainer = node.type === 'FRAME' || node.type === 'GROUP';
+      if (isContainer && hasChildren) empty++;
+    }
+
+    if ('children' in node) {
+      for (const child of node.children) {
+        walk(child, depth + 1);
+      }
+    }
+  }
+
+  walk(root, 0);
+
+  const rootName = root.type === 'PAGE'
+    ? figma.currentPage.name
+    : root.name;
+
+  figma.ui.postMessage({
+    type: 'scan-frame-result',
+    rootName,
+    stats: { total, hidden, locked, unnamed, empty, deeplyNested }
+  });
+}
+
+// ========================================
+// QUALITY AUDIT (Lead Level)
+// Scans the selection for the three most
 async function handleQualityAudit() {
+
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
@@ -1992,39 +2087,8 @@ function collectAllNodes(node, collection) {
   }
 }
 
-// ========================================
-// HELPER: COLLECT RENAMEABLE NODES
-// Why: Recursively collects nodes that can be renamed
-// Constraint: Skips components and instances
-// ========================================
-function collectRenameableNodes(node, collection) {
-  const stack = [node];
 
-  while (stack.length > 0) {
-    const currentNode = stack.pop();
 
-    if (isRenameable(currentNode)) {
-      collection.push(currentNode);
-    }
-
-    if ('children' in currentNode) {
-      for (let i = currentNode.children.length - 1; i >= 0; i--) {
-        stack.push(currentNode.children[i]);
-      }
-    }
-  }
-}
-
-// ========================================
-// HELPER: IS RENAMEABLE CHECK
-// Why: Protects component masters and instances
-// ========================================
-function isRenameable(node) {
-  if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET' || node.type === 'INSTANCE') {
-    return false;
-  }
-  return true;
-}
 // ========================================
 // ATOMIC NAME GENERATION ALGORITHM
 // Why: Applies Atomic Design principles to layer naming
@@ -2044,6 +2108,9 @@ function isRenameable(node) {
 async function generateName(node, casing = 'pascal', convention = 'atomic') {
   // First generate base name using atomic logic
   let baseName = await generateAtomicName(node, casing);
+
+  // If null, the node should be skipped (e.g. text with no connected style)
+  if (baseName === null) return null;
 
   // Apply convention-specific transformations
   switch (convention) {
@@ -2144,48 +2211,17 @@ async function generateAtomicName(node, casing = 'pascal') {
 
   let baseName = '';
 
-  // Level 1: TEXT - Check if connected to text style
+  // Level 1: TEXT - Rename based on connected style, or "Content" if no style
   if (node.type === 'TEXT') {
-    // Check if textStyleId is a valid string (not mixed, not empty)
+    // If connected to a Local or Remote text style, use the style name exactly as-is
     if (typeof node.textStyleId === 'string' && node.textStyleId.length > 0) {
-      let textStyle = null;
-      try {
-        // Try getting local/used style first
-        textStyle = figma.getStyleById(node.textStyleId);
-      } catch (e) { }
-
-      // If not found, try importing by Key (Remote Style)
-      if (!textStyle) {
-        try {
-          // textStyleId format is usually "S:Key," or just "S:Key"
-          // Attempt to extract key
-          const matches = node.textStyleId.match(/^S:([^,]+)/);
-          if (matches && matches[1]) {
-            textStyle = await figma.importStyleByKeyAsync(matches[1]);
-          }
-        } catch (e) {
-          // Import failed
-        }
-      }
-
+      const textStyle = await resolveTextStyle(node.textStyleId);
       if (textStyle && textStyle.name) {
-        // Rule: Use Root Category + "Text"
-        // Example: "Heading/H1" -> "Heading" -> "HeadingText" (or "heading-text")
-        const rootName = textStyle.name.split('/')[0].trim();
-        const standardizedName = `${rootName} Text`;
-
-        const formattedName = applyCasing(standardizedName, casing);
-        return formattedName || standardizedName;
+        return textStyle.name; // Use the exact style name — no changes
       }
     }
-    // Fallback: Use content if no style found
-    // "Atomic Renaming: Rename Text layers to their content"
-    const content = getTextContent(node);
-    if (content) {
-      baseName = sanitizeText(content);
-    } else {
-      baseName = 'Text';
-    }
+    // No style connected → fall back to "Content"
+    baseName = 'Content';
   }
   // LEVEL 1: IMAGES - Any image file
   else if (node.type === 'RECTANGLE' && hasFills(node) && hasImageFill(node)) {
@@ -2199,6 +2235,10 @@ async function generateAtomicName(node, casing = 'pascal') {
   }
   // LEVEL 2-5: HIERARCHICAL - Groups/Frames/Auto Layouts
   else if ((node.type === 'FRAME' || node.type === 'GROUP') && 'children' in node) {
+    // Skip top-level frames (direct children of the page — Mobile/Tablet/Desktop frames)
+    if (node.parent && node.parent.type === 'PAGE') {
+      return node.name; // Keep name as-is
+    }
     baseName = determineHierarchyLevel(node);
   }
   else {
@@ -2213,10 +2253,6 @@ async function generateAtomicName(node, casing = 'pascal') {
 // Analyzes nesting depth to assign correct level
 // ========================================
 function determineHierarchyLevel(node) {
-  if (!('children' in node) || node.children.length === 0) {
-    return 'Content';
-  }
-
   // Count how many children are groups/frames (nested levels)
   let nestedGroupCount = 0;
   let maxChildDepth = 0;
@@ -2229,17 +2265,19 @@ function determineHierarchyLevel(node) {
     }
   }
 
-  // Determine level based on nesting depth
-  if (maxChildDepth >= 3) {
-    return 'Block';        // Multiple Sections
-  } else if (maxChildDepth === 2) {
-    return 'Section';      // Multiple Containers
+  // New hierarchy:
+  // item      = 1st group / leaf frame (no nested group children)
+  // container = frame that holds multiple items (1 level deep)
+  // section   = holds multiple containers (2 levels deep)
+  // block     = holds multiple sections (3+ levels deep)
+  if (maxChildDepth >= 2) {
+    return 'Block';        // Holds sections
   } else if (maxChildDepth === 1) {
-    return 'Container';    // Multiple Items
+    return 'Section';      // Holds containers
   } else if (nestedGroupCount > 0) {
-    return 'Item';         // Multiple Content
+    return 'Container';    // Holds items
   } else {
-    return 'Content';      // Single elements
+    return 'Item';         // Leaf frame / 1st group
   }
 }
 
