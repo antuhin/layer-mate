@@ -708,6 +708,11 @@
       color: var(--blue);
     }
 
+    .badge-grey {
+      background: var(--bg-3);
+      color: var(--text-2);
+    }
+
     .issue-items {
       display: flex;
       flex-direction: column;
@@ -742,14 +747,31 @@
       border-color: var(--blue-border);
     }
 
-    .issue-item-name {
+    .issue-left {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      overflow: hidden;
+    }
+
+    .issue-item-name {
       font-size: 11px;
       color: var(--text-1);
+      font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
+    .issue-item-detail {
+      font-size: 10px;
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
 
     .issue-item-arrow {
       font-size: 10px;
@@ -979,61 +1001,67 @@
       </div>
 
       <!-- Stat grid -->
-      <div class="stat-grid" id="stat-grid">
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#EEF2FF;">📊</div>
-          <div class="stat-right">
-            <div class="stat-num" id="stat-total">—</div>
-            <div class="stat-lbl">Total Layers</div>
+      <!-- Stats Card -->
+      <div class="card">
+        <div class="card-title">Frame Stats</div>
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#EEF2FF;">📊</div>
+            <div class="stat-right">
+              <div class="stat-num" id="stat-total">—</div>
+              <div class="stat-lbl">Total Layers</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#FFF7E6;">👁</div>
+            <div class="stat-right">
+              <div class="stat-num" id="stat-hidden">—</div>
+              <div class="stat-lbl">Hidden</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#F3EEFF;">🔒</div>
+            <div class="stat-right">
+              <div class="stat-num" id="stat-locked">—</div>
+              <div class="stat-lbl">Locked</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#FFF0F3;">🏷️</div>
+            <div class="stat-right">
+              <div class="stat-num accent" id="stat-unnamed">—</div>
+              <div class="stat-lbl">Unnamed</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#E8F5FF;">📦</div>
+            <div class="stat-right">
+              <div class="stat-num" id="stat-empty">—</div>
+              <div class="stat-lbl">Empty</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#E8FAEA;">🪆</div>
+            <div class="stat-right">
+              <div class="stat-num accent" id="stat-nested">—</div>
+              <div class="stat-lbl">Deeply Nested</div>
+            </div>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#FFF7E6;">👁</div>
-          <div class="stat-right">
-            <div class="stat-num" id="stat-hidden">—</div>
-            <div class="stat-lbl">Hidden</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#F3EEFF;">🔒</div>
-          <div class="stat-right">
-            <div class="stat-num" id="stat-locked">—</div>
-            <div class="stat-lbl">Locked</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#FFF0F3;">🏷️</div>
-          <div class="stat-right">
-            <div class="stat-num accent" id="stat-unnamed">—</div>
-            <div class="stat-lbl">Unnamed</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#E8F5FF;">📦</div>
-          <div class="stat-right">
-            <div class="stat-num" id="stat-empty">—</div>
-            <div class="stat-lbl">Empty</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:#E8FAEA;">🪆</div>
-          <div class="stat-right">
-            <div class="stat-num accent" id="stat-nested">—</div>
-            <div class="stat-lbl">Deeply Nested</div>
-          </div>
+
+        <!-- Rescan button inside card footer? Or just after grid? -->
+        <div style="margin-top: 12px;">
+          <button id="scan-btn" class="btn btn-secondary" style="width:100%; gap:8px;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M2.5 7A4.5 4.5 0 107 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M2.5 4.5V7H5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span class="btn-text">Rescan Frame</span>
+            <span class="spinner" role="status" aria-label="Loading"></span>
+          </button>
         </div>
       </div>
-
-      <!-- Rescan button -->
-      <button id="scan-btn" class="btn btn-secondary" style="gap:8px;">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M2.5 7A4.5 4.5 0 107 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          <path d="M2.5 4.5V7H5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
-            stroke-linejoin="round" />
-        </svg>
-        <span class="btn-text">Scan</span>
-        <span class="spinner" role="status" aria-label="Loading"></span>
-      </button>
 
     </section>
 
@@ -1150,8 +1178,9 @@
       </div>
 
       <!-- Run button -->
-      <button id="audit-btn" class="btn btn-primary"
-        style="background: linear-gradient(160deg, #3DD98A 0%, #27a964 100%); box-shadow: 0 2px 12px rgba(52,196,124,0.3);">
+      <!-- Run button -->
+      <!-- Run button -->
+      <button id="audit-btn" class="btn btn-primary" style="margin-bottom: 24px; height: 36px;">
         <span class="btn-text">Run Quality Check</span>
         <span class="spinner" role="status" aria-label="Loading"></span>
       </button>
@@ -1230,13 +1259,29 @@
     });
 
     // ─── Collapsible sections ────────────────────────────────────────
-    document.querySelectorAll('.coll-header').forEach(header => {
-      const coll = header.closest('.collapsible');
-      header.addEventListener('click', toggle);
-      header.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
-      function toggle() {
-        const open = coll.classList.toggle('open');
-        header.setAttribute('aria-expanded', open);
+    // ─── Collapsible sections (Delegated) ────────────────────────────
+    document.addEventListener('click', e => {
+      const header = e.target.closest('.coll-header');
+      if (header) {
+        const coll = header.closest('.collapsible');
+        if (coll) {
+          coll.classList.toggle('open');
+          header.setAttribute('aria-expanded', coll.classList.contains('open'));
+        }
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const header = e.target.closest('.coll-header');
+        if (header) {
+          e.preventDefault();
+          const coll = header.closest('.collapsible');
+          if (coll) {
+            coll.classList.toggle('open');
+            header.setAttribute('aria-expanded', coll.classList.contains('open'));
+          }
+        }
       }
     });
 
@@ -1359,27 +1404,37 @@
       let html = '';
 
       const cats = [
-        { key: 'missingAltText', label: 'Missing Alt Text', badge: 'badge-red' },
-        { key: 'defaultNames', label: 'Default Layer Names', badge: 'badge-amber' },
-        { key: 'poorContrast', label: 'Contrast Issues', badge: 'badge-amber' },
+        { key: 'poorContrast', label: 'Contrast Issues', badge: 'badge-amber', icon: '⚠️' },
+        { key: 'missingAltText', label: 'Missing Alt Text', badge: 'badge-red', icon: '🖼️' },
+        { key: 'smallTouchTargets', label: 'Small Touch Targets', badge: 'badge-amber', icon: '👆' },
+        { key: 'smallFonts', label: 'Small Text', badge: 'badge-grey', icon: 'Aa' },
+        { key: 'defaultNames', label: 'Default Layer Names', badge: 'badge-grey', icon: '🏷️' },
       ];
 
-      cats.forEach(({ key, label, badge }) => {
+      cats.forEach(({ key, label, badge, icon }) => {
         const items = errors[key];
         if (!items || items.length === 0) return;
         html += `
-          <div class="issue-cat">
-            <div class="issue-cat-header">
-              <div class="issue-cat-title">${label}</div>
+          <div class="collapsible issue-cat" style="margin-bottom:8px;">
+            <div class="coll-header" role="button" tabindex="0" aria-expanded="false">
+              <div class="issue-cat-title" style="flex:1;">${icon || '•'} ${label}</div>
               <span class="badge ${badge}">${items.length}</span>
+              <svg class="coll-chevron" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
-            <div class="issue-items">
-              ${items.map(e => `
-                <div class="issue-item" onclick="locateNode('${e.id}')">
-                  <span class="issue-item-name">${escHtml(e.name)}</span>
-                  <span class="issue-item-arrow">→</span>
-                </div>
-              `).join('')}
+            <div class="coll-body">
+              <div class="issue-items">
+                ${items.map(e => `
+                  <div class="issue-item" onclick="locateNode('${e.id}')">
+                    <div class="issue-left">
+                      <span class="issue-item-name">${escHtml(e.name)}</span>
+                      ${e.issue ? `<span class="issue-item-detail">${escHtml(e.issue)}</span>` : ''}
+                    </div>
+                    <span class="issue-item-arrow">→</span>
+                  </div>
+                `).join('')}
+              </div>
             </div>
           </div>`;
       });
@@ -1440,7 +1495,7 @@
           case 'auto-rename-complete':
             setLoading(autoRenameBtn, false);
             if (msg.count > 0) {
-              showToast(`Renamed ${msg.count} layer${msg.count !== 1 ? 's' : ''}`, 'success');
+              showToast(`Renamed ${msg.count} layer${msg.count !== 1 ? 's' : ''} `, 'success');
             } else {
               showToast('No layers renamed', 'info');
             }
@@ -1448,12 +1503,12 @@
 
           case 'hidden-layers-removed':
             setLoading(removeHiddenBtn, false);
-            showToast(`Removed ${msg.count} hidden layer${msg.count !== 1 ? 's' : ''}`, 'success');
+            showToast(`Removed ${msg.count} hidden layer${msg.count !== 1 ? 's' : ''} `, 'success');
             break;
 
           case 'redundant-removed':
             setLoading(removeRedundantBtn, false);
-            showToast(`Flattened ${msg.count} wrapper${msg.count !== 1 ? 's' : ''}`, 'success');
+            showToast(`Flattened ${msg.count} wrapper${msg.count !== 1 ? 's' : ''} `, 'success');
             break;
 
           case 'quality-audit-complete':
