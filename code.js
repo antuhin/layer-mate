@@ -632,6 +632,14 @@ figma.ui.onmessage = async (msg) => {
         await handleRemoveRedundantWrappers();
         break;
 
+      case 'unlock-all-layers':
+        await handleUnlockAllLayers();
+        break;
+
+      case 'remove-empty-frames':
+        await handleRemoveEmptyFrames();
+        break;
+
       // STATE PERSISTENCE
       case 'save-tab':
         await figma.clientStorage.setAsync('lastActiveTab', msg.tab);
@@ -1427,6 +1435,91 @@ async function handleRemoveRedundantWrappers() {
     figma.ui.postMessage({ type: 'error', message: 'No redundant wrappers found in selection' });
   } else {
     figma.ui.postMessage({ type: 'redundant-removed', count: count });
+  }
+}
+
+// ========================================
+// UTILITY: UNLOCK ALL LAYERS
+// Recursively unlocks all layers in selection
+// ========================================
+async function handleUnlockAllLayers() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select layers to unlock' });
+    return;
+  }
+
+  let count = 0;
+  function unlockRecursive(node) {
+    // Skip if inside component instance logic prevents editing structure, 
+    // but locking is a property we can usually toggle unless locked by parent instance?
+    // Actually, we can unlock layers inside instances if it's an override.
+    try {
+      if (node.locked) {
+        node.locked = false;
+        count++;
+      }
+    } catch (e) { }
+
+    if ('children' in node) {
+      for (const child of node.children) {
+        unlockRecursive(child);
+      }
+    }
+  }
+
+  for (const node of selection) {
+    unlockRecursive(node);
+  }
+
+  figma.ui.postMessage({ type: 'toast', message: `Unlocked ${count} layers` });
+}
+
+// ========================================
+// UTILITY: REMOVE EMPTY FRAMES
+// Recursively removes frames/groups with 0 children
+// ========================================
+async function handleRemoveEmptyFrames() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select scope for cleanup' });
+    return;
+  }
+
+  let count = 0;
+
+  // Bottom-up recursion to catch nested empty frames
+  function removeEmptyRecursive(node) {
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') return;
+
+    if ('children' in node) {
+      const children = [...node.children];
+      for (const child of children) {
+        removeEmptyRecursive(child);
+      }
+    }
+
+    // Check if empty container
+    const isContainer = node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'SECTION';
+    if (isContainer && node.children.length === 0) {
+      // Don't remove if it has a fill? Maybe user wants empty colored boxes?
+      // User requested "Empty Frames". Usually implies useless containers.
+      // But let's be safe: if it has forced explicit "Empty" intent, we remove it.
+      try {
+        node.remove();
+        count++;
+      } catch (e) { }
+    }
+  }
+
+  for (const node of selection) {
+    removeEmptyRecursive(node);
+  }
+
+  if (count === 0) {
+    figma.ui.postMessage({ type: 'toast', message: 'No empty frames found' });
+  } else {
+    figma.ui.postMessage({ type: 'toast', message: `Removed ${count} empty frames` });
   }
 }
 

@@ -1109,13 +1109,25 @@
       <!-- Cleanup utilities card -->
       <div class="card">
         <div class="card-title">Cleanup Tools</div>
-        <div class="btn-row">
-          <button id="remove-hidden-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
+        <div class="btn-row" style="flex-wrap: wrap; gap: 8px;">
+          <button id="remove-hidden-btn" class="btn btn-secondary"
+            style="font-size:11px; padding:8px 10px; flex: 1 1 45%;">
             <span class="btn-text">🗑 Remove Hidden</span>
             <span class="spinner" role="status" aria-label="Loading"></span>
           </button>
-          <button id="remove-redundant-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
+          <button id="remove-redundant-btn" class="btn btn-secondary"
+            style="font-size:11px; padding:8px 10px; flex: 1 1 45%;">
             <span class="btn-text">📦 Flatten Wrappers</span>
+            <span class="spinner" role="status" aria-label="Loading"></span>
+          </button>
+          <button id="unlock-all-btn" class="btn btn-secondary"
+            style="font-size:11px; padding:8px 10px; flex: 1 1 45%;">
+            <span class="btn-text">🔓 Unlock All Layers</span>
+            <span class="spinner" role="status" aria-label="Loading"></span>
+          </button>
+          <button id="remove-empty-btn" class="btn btn-secondary"
+            style="font-size:11px; padding:8px 10px; flex: 1 1 45%;">
+            <span class="btn-text">🚫 Empty Frames</span>
             <span class="spinner" role="status" aria-label="Loading"></span>
           </button>
         </div>
@@ -1269,9 +1281,28 @@
     });
 
     const removeRedundantBtn = document.getElementById('remove-redundant-btn');
+    const unlockAllBtn = document.getElementById('unlock-all-btn');
+    const removeEmptyBtn = document.getElementById('remove-empty-btn');
     removeRedundantBtn?.addEventListener('click', () => {
       setLoading(removeRedundantBtn, true);
-      parent.postMessage({ pluginMessage: { type: 'remove-redundant-wrappers' } }, '*');
+      // Let the button state update before freezing the UI
+      setTimeout(() => {
+        parent.postMessage({ pluginMessage: { type: 'remove-redundant-wrappers' } }, '*');
+      }, 50);
+    });
+
+    unlockAllBtn?.addEventListener('click', () => {
+      setLoading(unlockAllBtn, true);
+      setTimeout(() => {
+        parent.postMessage({ pluginMessage: { type: 'unlock-all-layers' } }, '*');
+      }, 50);
+    });
+
+    removeEmptyBtn?.addEventListener('click', () => {
+      setLoading(removeEmptyBtn, true);
+      setTimeout(() => {
+        parent.postMessage({ pluginMessage: { type: 'remove-empty-frames' } }, '*');
+      }, 50);
     });
 
     // ─── Inspect / Scan ──────────────────────────────────────────────
@@ -1471,7 +1502,14 @@
           }
 
           case 'toast':
-            showToast(msg.message || '', 'info');
+            setLoading(autoRenameBtn, false);
+            setLoading(auditBtn, false);
+            if (removeHiddenBtn) setLoading(removeHiddenBtn, false);
+            if (removeRedundantBtn) setLoading(removeRedundantBtn, false);
+            if (unlockAllBtn) setLoading(unlockAllBtn, false);
+            if (removeEmptyBtn) setLoading(removeEmptyBtn, false);
+            if (scanBtn) setLoading(scanBtn, false);
+            showToast(msg.message || '', 'success');
             break;
 
           case 'error':
@@ -1479,6 +1517,8 @@
             setLoading(auditBtn, false);
             if (removeHiddenBtn) setLoading(removeHiddenBtn, false);
             if (removeRedundantBtn) setLoading(removeRedundantBtn, false);
+            if (unlockAllBtn) setLoading(unlockAllBtn, false);
+            if (removeEmptyBtn) setLoading(removeEmptyBtn, false);
             if (scanBtn) setLoading(scanBtn, false);
             showToast(msg.message || 'An error occurred', 'error');
             break;
