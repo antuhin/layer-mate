@@ -1075,74 +1075,49 @@
       </div>
 
       <!-- Filters card -->
-      <div class="collapsible" id="filters-coll">
-        <div class="coll-header" id="filters-toggle" role="button" tabindex="0" aria-expanded="false"
-          aria-controls="filters-body">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M1 2.5h10M3 6h6M5 9.5h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          </svg>
-          Filters
-          <svg class="coll-chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </div>
-        <div class="coll-body pt" id="filters-body">
-          <label class="toggle-wrap">
-            <input type="checkbox" id="filter-locked">
-            <div class="toggle-text">
-              <span>Skip locked layers</span>
-            </div>
-          </label>
-          <label class="toggle-wrap">
-            <input type="checkbox" id="filter-hidden">
-            <div class="toggle-text">
-              <span>Skip hidden layers</span>
-            </div>
-          </label>
-          <label class="toggle-wrap">
-            <input type="checkbox" id="filter-default">
-            <div class="toggle-text">
-              <span>Only rename defaults</span>
-              <small>Frame 1, Group 2, etc.</small>
-            </div>
-          </label>
-        </div>
+      <!-- Filters card -->
+      <div class="card">
+        <div class="card-title">Filters</div>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="filter-locked">
+          <div class="toggle-text">
+            <span>Skip locked layers</span>
+          </div>
+        </label>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="filter-hidden">
+          <div class="toggle-text">
+            <span>Skip hidden layers</span>
+          </div>
+        </label>
+        <label class="toggle-wrap">
+          <input type="checkbox" id="filter-default">
+          <div class="toggle-text">
+            <span>Only rename defaults</span>
+            <small>Frame 1, Group 2, etc.</small>
+          </div>
+        </label>
       </div>
 
       <!-- Primary action -->
-      <button id="auto-rename-btn" class="btn btn-primary"
-        aria-label="Auto-rename selected layers using chosen convention">
-        <span class="btn-text">Auto-Rename Selection</span>
+      <button id="auto-rename-btn" class="btn btn-primary" aria-label="Rename selected layers using chosen convention">
+        <span class="btn-text">Rename Layers</span>
         <span class="spinner" role="status" aria-label="Loading"></span>
       </button>
 
       <!-- Cleanup utilities card -->
-      <div class="collapsible" id="cleanup-coll">
-        <div class="coll-header" id="cleanup-toggle" role="button" tabindex="0" aria-expanded="false"
-          aria-controls="cleanup-body">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M3 9.5L9 3M5 2.5H3a.5.5 0 00-.5.5v2" stroke="currentColor" stroke-width="1.4"
-              stroke-linecap="round" />
-            <path d="M9.5 7v2a.5.5 0 01-.5.5H7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          </svg>
-          Cleanup Tools
-          <svg class="coll-chevron" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-        </div>
-        <div class="coll-body pt" id="cleanup-body">
-          <div class="btn-row">
-            <button id="remove-hidden-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
-              <span class="btn-text">🗑 Remove Hidden</span>
-              <span class="spinner" role="status" aria-label="Loading"></span>
-            </button>
-            <button id="remove-redundant-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
-              <span class="btn-text">📦 Flatten Wrappers</span>
-              <span class="spinner" role="status" aria-label="Loading"></span>
-            </button>
-          </div>
+      <!-- Cleanup utilities card -->
+      <div class="card">
+        <div class="card-title">Cleanup Tools</div>
+        <div class="btn-row">
+          <button id="remove-hidden-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
+            <span class="btn-text">🗑 Remove Hidden</span>
+            <span class="spinner" role="status" aria-label="Loading"></span>
+          </button>
+          <button id="remove-redundant-btn" class="btn btn-secondary" style="font-size:11px; padding:8px 10px;">
+            <span class="btn-text">📦 Flatten Wrappers</span>
+            <span class="spinner" role="status" aria-label="Loading"></span>
+          </button>
         </div>
       </div>
 
