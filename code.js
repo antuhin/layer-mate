@@ -1689,13 +1689,13 @@ async function handleRemoveEmptyFrames() {
 // frames/groups, and deeply nested layers (depth > 4).
 // ========================================
 async function handleScanFrame() {
-  // Determine root: use the first selected node, or fall back to the whole page
+  // Determine root: use the selection array if > 0, otherwise fallback to page
   const selection = figma.currentPage.selection;
-  const root = selection.length > 0 ? selection[0] : figma.currentPage;
+  const roots = selection.length > 0 ? [...selection] : [figma.currentPage];
 
-  // Store the root so subsequent "select by type" requests scan the same area
+  // Store the roots so subsequent "select by type" requests scan the same area
   // even if the user's selection changes after clicking the first stat.
-  lastScannedRoot = root;
+  lastScannedRoot = roots;
 
   const DEFAULT_NAME_RE = /^(Frame|Group|Rectangle|Ellipse|Line|Vector|Polygon|Star|Component|Image|Text|Section)\s+\d+$/i;
 
@@ -1706,10 +1706,10 @@ async function handleScanFrame() {
   let empty = 0;
   let deeplyNested = 0;
 
-  function walk(node, depth) {
+  function walk(node, depth, isRoot) {
 
-    // Don't count the root itself — only its descendants
-    if (node !== root) {
+    // Don't count the root itself — only its descendants (unless requested otherwise)
+    if (!isRoot) {
       total++;
       if ('visible' in node && !node.visible) hidden++;
       if ('locked' in node && node.locked) locked++;
@@ -1725,17 +1725,20 @@ async function handleScanFrame() {
     if ('children' in node) {
       if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
         for (const child of node.children) {
-          walk(child, depth + 1);
+          walk(child, depth + 1, false);
         }
       }
     }
   }
 
-  walk(root, 0);
+  for (const rootNode of roots) {
+    walk(rootNode, 0, true);
+  }
 
-  const rootName = root.type === 'PAGE'
-    ? figma.currentPage.name
-    : root.name;
+  let rootName = "Multiple Selections";
+  if (roots.length === 1) {
+    rootName = roots[0].type === 'PAGE' ? figma.currentPage.name : roots[0].name;
+  }
 
   figma.ui.postMessage({
     type: 'scan-frame-result',
@@ -1747,23 +1750,23 @@ async function handleScanFrame() {
 // ========================================
 // SELECT SCANNED LAYERS BY TYPE
 // ========================================
-let lastScannedRoot = null; // Store the root from the last scan
+let lastScannedRoot = null; // Store the roots from the last scan
 
 async function handleSelectByType(type) {
-  // Ensure the root hasn't been deleted or invalidated by Figma.
-  let root = null;
-  if (lastScannedRoot && !lastScannedRoot.removed) {
-    root = lastScannedRoot;
+  // Ensure the roots haven't been deleted or invalidated by Figma.
+  let roots = [];
+  if (lastScannedRoot && Array.isArray(lastScannedRoot) && lastScannedRoot.every(r => !r.removed)) {
+    roots = lastScannedRoot;
   } else {
-    root = figma.currentPage.selection.length > 0 ? figma.currentPage.selection[0] : figma.currentPage;
+    roots = figma.currentPage.selection.length > 0 ? [...figma.currentPage.selection] : [figma.currentPage];
   }
 
   const DEFAULT_NAME_RE = /^(Frame|Group|Rectangle|Ellipse|Line|Vector|Polygon|Star|Component|Image|Text|Section)\s+\d+$/i;
   const matchedNodes = [];
 
-  function walk(node, depth) {
+  function walk(node, depth, isRoot) {
 
-    if (node !== root) {
+    if (!isRoot) {
       let match = false;
       if (type === 'hidden' && 'visible' in node && !node.visible) match = true;
       if (type === 'locked' && 'locked' in node && node.locked) match = true;
@@ -1781,13 +1784,15 @@ async function handleSelectByType(type) {
     if ('children' in node) {
       if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
         for (const child of node.children) {
-          walk(child, depth + 1);
+          walk(child, depth + 1, false);
         }
       }
     }
   }
 
-  walk(root, 0);
+  for (const rootNode of roots) {
+    walk(rootNode, 0, true);
+  }
 
   if (matchedNodes.length > 0) {
     figma.currentPage.selection = matchedNodes;
