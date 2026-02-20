@@ -428,6 +428,7 @@
       padding: 10px 14px;
       border: none;
       border-radius: var(--r-md);
+      flex-shrink: 0;
       font-family: var(--font);
       font-size: 13px;
       font-weight: 600;
@@ -817,6 +818,76 @@
     }
 
     /* =============================================
+       MODAL DIALOG
+       ============================================= */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--bg-1);
+      border: 1px solid var(--border-mid);
+      border-radius: var(--r-md);
+      width: 260px;
+      padding: 16px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.95);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-0);
+      margin-bottom: 6px;
+    }
+
+    .modal-desc {
+      font-size: 11px;
+      color: var(--text-2);
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-actions .btn {
+      padding: 8px;
+      font-size: 11px;
+      flex: 1;
+      /* Make buttons take equal width */
+      height: 32px;
+      /* Set a fixed smaller height */
+      white-space: nowrap;
+      /* Prevent text wrapping */
+    }
+
+    /* =============================================
        TOAST
        ============================================= */
     #toast {
@@ -913,19 +984,23 @@
     }
 
     .stat-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 19px;
+      font-size: 18px;
       flex-shrink: 0;
+      pointer-events: none;
     }
 
     .stat-right {
+      display: flex;
+      flex-direction: column;
       flex: 1;
       min-width: 0;
+      pointer-events: none;
     }
 
     .stat-num {
@@ -949,6 +1024,20 @@
       color: var(--text-2);
       margin-top: 2px;
       font-weight: 500;
+    }
+
+    .stat-card.clickable {
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .stat-card.clickable:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-mid);
+    }
+
+    .stat-card.clickable:active {
+      transform: scale(0.98);
     }
   </style>
 </head>
@@ -1012,35 +1101,35 @@
               <div class="stat-lbl">Total Layers</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-type="hidden">
             <div class="stat-icon" style="background:#FFF7E6;">👁</div>
             <div class="stat-right">
               <div class="stat-num" id="stat-hidden">—</div>
               <div class="stat-lbl">Hidden</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-type="locked">
             <div class="stat-icon" style="background:#F3EEFF;">🔒</div>
             <div class="stat-right">
               <div class="stat-num" id="stat-locked">—</div>
               <div class="stat-lbl">Locked</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-type="unnamed">
             <div class="stat-icon" style="background:#FFF0F3;">🏷️</div>
             <div class="stat-right">
               <div class="stat-num accent" id="stat-unnamed">—</div>
               <div class="stat-lbl">Unnamed</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-type="empty">
             <div class="stat-icon" style="background:#E8F5FF;">📦</div>
             <div class="stat-right">
               <div class="stat-num" id="stat-empty">—</div>
               <div class="stat-lbl">Empty</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" data-type="deeplyNested">
             <div class="stat-icon" style="background:#E8FAEA;">🪆</div>
             <div class="stat-right">
               <div class="stat-num accent" id="stat-nested">—</div>
@@ -1057,7 +1146,7 @@
               <path d="M2.5 4.5V7H5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
                 stroke-linejoin="round" />
             </svg>
-            <span class="btn-text">Rescan Frame</span>
+            <span class="btn-text">Scan Frame</span>
             <span class="spinner" role="status" aria-label="Loading"></span>
           </button>
         </div>
@@ -1226,6 +1315,21 @@
   </div><!-- end .shell -->
 
   <!-- =============================================
+       CONFIRM MODAL
+       ============================================= -->
+  <div id="confirm-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-title" id="confirm-title">Confirm Action</div>
+      <div class="modal-desc" id="confirm-desc">Are you sure?</div>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="confirm-ok" class="btn btn-primary"
+          style="background: var(--red); box-shadow: none;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
        TOAST
        ============================================= -->
   <div id="toast" role="status" aria-live="assertive">
@@ -1322,18 +1426,16 @@
     const removeHiddenBtn = document.getElementById('remove-hidden-btn');
     removeHiddenBtn?.addEventListener('click', () => {
       setLoading(removeHiddenBtn, true);
-      parent.postMessage({ pluginMessage: { type: 'remove-hidden-layers' } }, '*');
+      parent.postMessage({ pluginMessage: { type: 'check-hidden-layers' } }, '*');
     });
 
     const removeRedundantBtn = document.getElementById('remove-redundant-btn');
     const unlockAllBtn = document.getElementById('unlock-all-btn');
     const removeEmptyBtn = document.getElementById('remove-empty-btn');
+
     removeRedundantBtn?.addEventListener('click', () => {
       setLoading(removeRedundantBtn, true);
-      // Let the button state update before freezing the UI
-      setTimeout(() => {
-        parent.postMessage({ pluginMessage: { type: 'remove-redundant-wrappers' } }, '*');
-      }, 50);
+      parent.postMessage({ pluginMessage: { type: 'check-redundant-wrappers' } }, '*');
     });
 
     unlockAllBtn?.addEventListener('click', () => {
@@ -1345,9 +1447,7 @@
 
     removeEmptyBtn?.addEventListener('click', () => {
       setLoading(removeEmptyBtn, true);
-      setTimeout(() => {
-        parent.postMessage({ pluginMessage: { type: 'remove-empty-frames' } }, '*');
-      }, 50);
+      parent.postMessage({ pluginMessage: { type: 'check-empty-frames' } }, '*');
     });
 
     // ─── Inspect / Scan ──────────────────────────────────────────────
@@ -1358,10 +1458,17 @@
     }
     scanBtn?.addEventListener('click', triggerScan);
 
-    // Auto-scan when the Scan tab becomes active
-    document.querySelector('[data-tab="scan"]')?.addEventListener('click', () => {
-      // Small delay so the pane animation completes first
-      setTimeout(triggerScan, 120);
+    // Interactive Scan Stats Click
+    document.querySelectorAll('.stat-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const targetCard = e.currentTarget;
+        if (targetCard.classList.contains('clickable')) {
+          const type = targetCard.dataset.type;
+          if (type) {
+            parent.postMessage({ pluginMessage: { type: 'select-by-type', scanType: type } }, '*');
+          }
+        }
+      });
     });
 
     // ─── Audit ───────────────────────────────────────────────────────
@@ -1481,7 +1588,37 @@
       toast.classList.add('show');
 
       if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // ─── Custom Confirm Dialog ────────────────────────────────────────
+    const confirmModal = document.getElementById('confirm-modal');
+    const confirmTitle = document.getElementById('confirm-title');
+    const confirmDesc = document.getElementById('confirm-desc');
+    const confirmOkBtn = document.getElementById('confirm-ok');
+    const confirmCancelBtn = document.getElementById('confirm-cancel');
+
+    function showConfirm(title, desc, onConfirm) {
+      confirmTitle.textContent = title;
+      confirmDesc.textContent = desc;
+      confirmModal.classList.add('show');
+
+      const handleOk = () => {
+        cleanup();
+        onConfirm();
+      };
+      const handleCancel = () => cleanup();
+
+      const cleanup = () => {
+        confirmModal.classList.remove('show');
+        confirmOkBtn.removeEventListener('click', handleOk);
+        confirmCancelBtn.removeEventListener('click', handleCancel);
+      };
+
+      confirmOkBtn.addEventListener('click', handleOk);
+      confirmCancelBtn.addEventListener('click', handleCancel);
     }
 
     // ─── Message handler ─────────────────────────────────────────────
@@ -1503,7 +1640,11 @@
 
           case 'hidden-layers-removed':
             setLoading(removeHiddenBtn, false);
-            showToast(`Removed ${msg.count} hidden layer${msg.count !== 1 ? 's' : ''} `, 'success');
+            let removedStr = `Removed ${msg.count} hidden layer${msg.count !== 1 ? 's' : ''}.`;
+            if (msg.lockedCount > 0) {
+              removedStr += ` ${msg.lockedCount} locked layer${msg.lockedCount !== 1 ? 's' : ''} skipped.`;
+            }
+            showToast(removedStr, 'success');
             break;
 
           case 'redundant-removed':
@@ -1519,6 +1660,53 @@
 
           case 'node-located':
             showToast(`Located: ${msg.nodeName}`, 'info');
+            break;
+
+          // Handle check results for destruction verification
+          case 'check-result':
+            // Reset loading state for the buttons
+            if (msg.action === 'remove-hidden-layers') setLoading(removeHiddenBtn, false);
+            if (msg.action === 'remove-redundant-wrappers') setLoading(removeRedundantBtn, false);
+            if (msg.action === 'remove-empty-frames') setLoading(removeEmptyBtn, false);
+
+            if (msg.count === 0) {
+              if (msg.lockedCount > 0) {
+                showToast(`Found ${msg.lockedCount} hidden layer${msg.lockedCount !== 1 ? 's' : ''}, but all are safely locked.`, 'info');
+              } else {
+                showToast('No relevant layers found in selection.', 'info');
+              }
+              return;
+            }
+
+            let title = '';
+            let desc = '';
+
+            if (msg.action === 'remove-hidden-layers') {
+              title = 'Remove Hidden Layers';
+              desc = `Are you sure you want to permanently delete exactly ${msg.count} hidden layer${msg.count !== 1 ? 's' : ''}?`;
+              if (msg.lockedCount > 0) {
+                desc += ` (${msg.lockedCount} locked layer${msg.lockedCount !== 1 ? 's' : ''} will be safely skipped.)`;
+              }
+            } else if (msg.action === 'remove-redundant-wrappers') {
+              title = 'Flatten Wrappers';
+              desc = `Are you sure you want to flatten ${msg.count} redundant wrapper container${msg.count !== 1 ? 's' : ''}?`;
+            } else if (msg.action === 'remove-empty-frames') {
+              title = 'Remove Empty Frames';
+              desc = `Are you sure you want to permanently delete ${msg.count} empty container${msg.count !== 1 ? 's' : ''}?`;
+            }
+
+            showConfirm(title, desc, () => {
+              if (msg.action === 'remove-hidden-layers') {
+                setLoading(removeHiddenBtn, true);
+                parent.postMessage({ pluginMessage: { type: 'remove-hidden-layers' } }, '*');
+              } else if (msg.action === 'remove-redundant-wrappers') {
+                setLoading(removeRedundantBtn, true);
+                parent.postMessage({ pluginMessage: { type: 'remove-redundant-wrappers' } }, '*');
+              } else if (msg.action === 'remove-empty-frames') {
+                setLoading(removeEmptyBtn, true);
+                parent.postMessage({ pluginMessage: { type: 'remove-empty-frames' } }, '*');
+              }
+            });
             break;
 
           case 'load-preferences':
@@ -1545,13 +1733,32 @@
               el.textContent = val;
               el.classList.toggle('zero', val === 0);
               el.classList.toggle('accent', highlightIfNonZero && val > 0);
+
+              const card = el.closest('.stat-card');
+              if (card && card.hasAttribute('data-type')) {
+                if (val > 0) {
+                  card.classList.add('clickable');
+                  const typeMap = {
+                    'hidden': 'hidden',
+                    'locked': 'locked',
+                    'unnamed': 'unnamed',
+                    'empty': 'empty frame',
+                    'deeplyNested': 'deeply nested'
+                  };
+                  const typeName = typeMap[card.dataset.type] || card.dataset.type;
+                  card.title = `Click to select all ${typeName} layers in Figma`;
+                } else {
+                  card.classList.remove('clickable');
+                  card.removeAttribute('title');
+                }
+              }
             }
 
             setStat('stat-total', s.total);
             setStat('stat-hidden', s.hidden, true);
-            setStat('stat-locked', s.locked);
+            setStat('stat-locked', s.locked, true);
             setStat('stat-unnamed', s.unnamed, true);
-            setStat('stat-empty', s.empty);
+            setStat('stat-empty', s.empty, true);
             setStat('stat-nested', s.deeplyNested, true);
             break;
           }

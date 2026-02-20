@@ -608,6 +608,10 @@ figma.ui.onmessage = async (msg) => {
         await handleScanFrame();
         break;
 
+      case 'select-by-type':
+        await handleSelectByType(msg.scanType);
+        break;
+
       // MODULE 3: THE LINTER (Lead Level)
       case 'quality-audit':
         await handleQualityAudit();
@@ -622,6 +626,17 @@ figma.ui.onmessage = async (msg) => {
       // LOCATE NODE (for error navigation)
       case 'locate-node':
         await handleLocateNode(msg.nodeId);
+        break;
+
+      // CHECK DESTRUCTIVE ACTIONS (Pre-flight counts)
+      case 'check-hidden-layers':
+        await handleCheckHiddenLayers();
+        break;
+      case 'check-redundant-wrappers':
+        await handleCheckRedundantWrappers();
+        break;
+      case 'check-empty-frames':
+        await handleCheckEmptyFrames();
         break;
 
       // REMOVE HIDDEN LAYERS
@@ -1301,6 +1316,63 @@ async function handleAutoFixColor(nodeId, issueIndex, styleName) {
 // UTILITY: REMOVE HIDDEN LAYERS
 // Removes all hidden layers while protecting components
 // ========================================
+async function handleCheckHiddenLayers() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Please select at least one layer or frame' });
+    return;
+  }
+
+  const matchedNodes = [];
+  let lockedCount = 0;
+  function collectHiddenLayers(node) {
+    // Check if the node is inside a component/instance hierarchy
+    let currentNode = node.parent;
+    let isInsideComponent = false;
+    while (currentNode) {
+      if (currentNode.type === 'COMPONENT' || currentNode.type === 'INSTANCE' || currentNode.type === 'COMPONENT_SET') {
+        isInsideComponent = true;
+        break;
+      }
+      currentNode = currentNode.parent;
+    }
+
+    // If it is NOT inside a component, check if it's hidden
+    if (!isInsideComponent && node.visible === false) {
+      if (node.locked) {
+        lockedCount++;
+      } else {
+        matchedNodes.push(node);
+      }
+    }
+
+    // Recurse into children ONLY if node itself is not a component/instance
+    if ('children' in node) {
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          collectHiddenLayers(child);
+        }
+      }
+    }
+  }
+
+  for (const node of selection) {
+    collectHiddenLayers(node);
+  }
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({
+    type: 'check-result',
+    action: 'remove-hidden-layers',
+    count: matchedNodes.length,
+    lockedCount: lockedCount
+  });
+}
+
 async function handleRemoveHiddenLayers() {
   const selection = figma.currentPage.selection;
 
@@ -1314,14 +1386,10 @@ async function handleRemoveHiddenLayers() {
 
   // Collect all hidden layers (excluding components)
   const hiddenLayers = [];
+  let lockedCount = 0;
 
   function collectHiddenLayers(node) {
-    // Skip if it's a component, instance, or component set
-    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
-      return;
-    }
-
-    // Skip if ANY parent in the hierarchy is a component (nested components)
+    // Check if the node is inside a component/instance hierarchy
     let currentNode = node.parent;
     let isInsideComponent = false;
     while (currentNode) {
@@ -1331,19 +1399,22 @@ async function handleRemoveHiddenLayers() {
       }
       currentNode = currentNode.parent;
     }
-    if (isInsideComponent) {
-      return;
+
+    // If it is NOT inside a component, check if it's hidden
+    if (!isInsideComponent && node.visible === false) {
+      if (node.locked) {
+        lockedCount++;
+      } else {
+        hiddenLayers.push(node);
+      }
     }
 
-    // If node is hidden and not a component, add to list
-    if (node.visible === false) {
-      hiddenLayers.push(node);
-    }
-
-    // Recurse into children
+    // Recurse into children ONLY if node itself is not a component/instance
     if ('children' in node) {
-      for (const child of node.children) {
-        collectHiddenLayers(child);
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          collectHiddenLayers(child);
+        }
       }
     }
   }
@@ -1366,7 +1437,8 @@ async function handleRemoveHiddenLayers() {
 
   figma.ui.postMessage({
     type: 'hidden-layers-removed',
-    count: removedCount
+    count: removedCount,
+    lockedCount: lockedCount
   });
 }
 
@@ -1374,6 +1446,47 @@ async function handleRemoveHiddenLayers() {
 // UTILITY: REMOVE REDUNDANT WRAPPERS
 // Un-groups frames/groups that contain only a single Text or Component
 // ========================================
+async function handleCheckRedundantWrappers() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select frames to clean' });
+    return;
+  }
+
+  const matchedNodes = [];
+  function scanAndCount(node) {
+    if (node.locked) return;
+
+    if ('children' in node) {
+      const children = [...node.children];
+      for (const child of children) {
+        scanAndCount(child);
+      }
+    }
+
+    const isContainer = node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'SECTION';
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') return;
+
+    if (isContainer && 'children' in node && node.children.length === 1) {
+      if (!node.parent) return;
+      matchedNodes.push(node);
+    }
+  }
+
+  for (const node of selection) scanAndCount(node);
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({
+    type: 'check-result',
+    action: 'remove-redundant-wrappers',
+    count: matchedNodes.length
+  });
+}
+
 async function handleRemoveRedundantWrappers() {
   const selection = figma.currentPage.selection;
   if (selection.length === 0) {
@@ -1449,7 +1562,7 @@ async function handleUnlockAllLayers() {
     return;
   }
 
-  let count = 0;
+  const matchedNodes = [];
   function unlockRecursive(node) {
     // Skip if inside component instance logic prevents editing structure, 
     // but locking is a property we can usually toggle unless locked by parent instance?
@@ -1457,7 +1570,7 @@ async function handleUnlockAllLayers() {
     try {
       if (node.locked) {
         node.locked = false;
-        count++;
+        matchedNodes.push(node);
       }
     } catch (e) { }
 
@@ -1472,13 +1585,53 @@ async function handleUnlockAllLayers() {
     unlockRecursive(node);
   }
 
-  figma.ui.postMessage({ type: 'toast', message: `Unlocked ${count} layers` });
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({ type: 'toast', message: `Unlocked ${matchedNodes.length} layer${matchedNodes.length !== 1 ? 's' : ''}` });
 }
 
 // ========================================
 // UTILITY: REMOVE EMPTY FRAMES
 // Recursively removes frames/groups with 0 children
 // ========================================
+async function handleCheckEmptyFrames() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select scope for cleanup' });
+    return;
+  }
+
+  const matchedNodes = [];
+  function countEmptyRecursive(node) {
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') return;
+
+    if ('children' in node) {
+      for (const child of node.children) countEmptyRecursive(child);
+    }
+
+    const isContainer = node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'SECTION';
+    if (isContainer && node.children && node.children.length === 0) {
+      matchedNodes.push(node);
+    }
+  }
+
+  for (const node of selection) countEmptyRecursive(node);
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({
+    type: 'check-result',
+    action: 'remove-empty-frames',
+    count: matchedNodes.length
+  });
+}
+
 async function handleRemoveEmptyFrames() {
   const selection = figma.currentPage.selection;
   if (selection.length === 0) {
@@ -1540,6 +1693,10 @@ async function handleScanFrame() {
   const selection = figma.currentPage.selection;
   const root = selection.length > 0 ? selection[0] : figma.currentPage;
 
+  // Store the root so subsequent "select by type" requests scan the same area
+  // even if the user's selection changes after clicking the first stat.
+  lastScannedRoot = root;
+
   const DEFAULT_NAME_RE = /^(Frame|Group|Rectangle|Ellipse|Line|Vector|Polygon|Star|Component|Image|Text|Section)\s+\d+$/i;
 
   let total = 0;
@@ -1550,6 +1707,7 @@ async function handleScanFrame() {
   let deeplyNested = 0;
 
   function walk(node, depth) {
+
     // Don't count the root itself — only its descendants
     if (node !== root) {
       total++;
@@ -1563,9 +1721,12 @@ async function handleScanFrame() {
       if (isContainer && hasChildren) empty++;
     }
 
+    // Only traverse children if the node is not a component/instance
     if ('children' in node) {
-      for (const child of node.children) {
-        walk(child, depth + 1);
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          walk(child, depth + 1);
+        }
       }
     }
   }
@@ -1581,6 +1742,60 @@ async function handleScanFrame() {
     rootName,
     stats: { total, hidden, locked, unnamed, empty, deeplyNested }
   });
+}
+
+// ========================================
+// SELECT SCANNED LAYERS BY TYPE
+// ========================================
+let lastScannedRoot = null; // Store the root from the last scan
+
+async function handleSelectByType(type) {
+  // Ensure the root hasn't been deleted or invalidated by Figma.
+  let root = null;
+  if (lastScannedRoot && !lastScannedRoot.removed) {
+    root = lastScannedRoot;
+  } else {
+    root = figma.currentPage.selection.length > 0 ? figma.currentPage.selection[0] : figma.currentPage;
+  }
+
+  const DEFAULT_NAME_RE = /^(Frame|Group|Rectangle|Ellipse|Line|Vector|Polygon|Star|Component|Image|Text|Section)\s+\d+$/i;
+  const matchedNodes = [];
+
+  function walk(node, depth) {
+
+    if (node !== root) {
+      let match = false;
+      if (type === 'hidden' && 'visible' in node && !node.visible) match = true;
+      if (type === 'locked' && 'locked' in node && node.locked) match = true;
+      if (type === 'unnamed' && DEFAULT_NAME_RE.test(node.name)) match = true;
+      if (type === 'deeplyNested' && depth > 4) match = true;
+
+      const hasChildren = 'children' in node && node.children.length === 0;
+      const isContainer = node.type === 'FRAME' || node.type === 'GROUP';
+      if (type === 'empty' && isContainer && hasChildren) match = true;
+
+      if (match) matchedNodes.push(node);
+    }
+
+    // Only traverse children if the node is not a component/instance
+    if ('children' in node) {
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          walk(child, depth + 1);
+        }
+      }
+    }
+  }
+
+  walk(root, 0);
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+    figma.ui.postMessage({ type: 'toast', message: `Selected ${matchedNodes.length} ${type} layer${matchedNodes.length !== 1 ? 's' : ''}` });
+  } else {
+    figma.ui.postMessage({ type: 'toast', message: `No ${type} layers found` });
+  }
 }
 
 // ========================================
@@ -1644,13 +1859,13 @@ async function handleQualityAudit() {
   let passedChecks = 0;
 
   for (const node of allNodes) {
-    // Check 1: Missing Alt Text on Images (Skip Components and Nested Components)
-    if (node.type === 'RECTANGLE' || node.type === 'ELLIPSE' || node.type === 'POLYGON') {
-      // Skip if it's a component or instance
-      if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
-        continue;
-      }
+    // Completely skip components and instances from all audit checks
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
+      continue;
+    }
 
+    // Check 1: Missing Alt Text on Images
+    if (node.type === 'RECTANGLE' || node.type === 'ELLIPSE' || node.type === 'POLYGON') {
       // Skip if ANY parent in the hierarchy is a component (nested components)
       let currentNode = node.parent;
       let isInsideComponent = false;
@@ -1763,8 +1978,7 @@ async function handleQualityAudit() {
     // Check 5: Touch Target Size
     const isInteractive = node.name.toLowerCase().includes('button') ||
       node.name.toLowerCase().includes('btn') ||
-      node.name.toLowerCase().includes('link') ||
-      (node.type === 'COMPONENT' || node.type === 'INSTANCE');
+      node.name.toLowerCase().includes('link');
     if (isInteractive) {
       totalChecks++;
       if (node.width < 44 || node.height < 44) {
@@ -2172,9 +2386,12 @@ function collectAllNodes(node, collection) {
     const currentNode = stack.pop();
     collection.push(currentNode);
 
+    // Skip children of components/instances to avoid auditing their internals
     if ('children' in currentNode) {
-      for (let i = currentNode.children.length - 1; i >= 0; i--) {
-        stack.push(currentNode.children[i]);
+      if (currentNode.type !== 'COMPONENT' && currentNode.type !== 'INSTANCE' && currentNode.type !== 'COMPONENT_SET') {
+        for (let i = currentNode.children.length - 1; i >= 0; i--) {
+          stack.push(currentNode.children[i]);
+        }
       }
     }
   }
