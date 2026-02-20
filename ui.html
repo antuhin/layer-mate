@@ -125,6 +125,29 @@
       color: var(--text-1);
     }
 
+    .settings-btn {
+      margin-left: auto;
+      background: transparent;
+      border: none;
+      color: var(--text-2);
+      cursor: pointer;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+
+    .settings-btn:hover {
+      color: var(--text-0);
+    }
+
+    .settings-btn svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.8;
+    }
+
     .tab-btn.active {
       color: var(--text-0);
     }
@@ -574,9 +597,6 @@
       display: block;
     }
 
-    /* =============================================
-       QA / LINT — health score
-       ============================================= */
     .health-wrap {
       display: flex;
       align-items: center;
@@ -806,7 +826,197 @@
     }
 
     /* =============================================
-       MODAL DIALOG
+       SETTINGS MODAL
+       ============================================= */
+    /* =============================================
+       SETTINGS MODAL (Redesigned)
+       ============================================= */
+    .settings-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .settings-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-modal {
+      background: var(--bg-1);
+      width: 100%;
+      max-width: 300px;
+      border-radius: var(--r-xl);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--border);
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .settings-overlay.show .settings-modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .settings-header {
+      padding: 16px 18px;
+      background: linear-gradient(to bottom, var(--bg-1), var(--bg-2));
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .settings-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-0);
+      letter-spacing: -0.01em;
+    }
+
+    .settings-close {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .settings-close:hover {
+      background: var(--bg-3);
+      color: var(--text-1);
+    }
+
+    .settings-body {
+      padding: 10px 8px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 10px;
+      border-radius: var(--r-md);
+      transition: background 0.15s ease;
+      gap: 12px;
+    }
+
+    .settings-row:hover {
+      background: var(--bg-2);
+    }
+
+    .settings-row-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--bg-3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+
+    .settings-row-content {
+      flex: 1;
+    }
+
+    .settings-row-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 2px;
+    }
+
+    .settings-row-desc {
+      font-size: 10px;
+      color: var(--text-3);
+      line-height: 1.3;
+    }
+
+    /* Modern Toggle Switch */
+    .modern-toggle {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .modern-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .modern-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-3);
+      transition: .2s;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .modern-slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 2px;
+      bottom: 2px;
+      background-color: var(--text-2);
+      transition: .2s;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked+.modern-slider {
+      background-color: rgba(24, 160, 251, 0.2);
+      border-color: var(--blue);
+    }
+
+    input:checked+.modern-slider:before {
+      transform: translateX(14px);
+      background-color: var(--blue);
+    }
+
+    .settings-footer {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-0);
+      font-size: 10px;
+      color: var(--text-3);
+      text-align: center;
+    }
+
+
+    /* =============================================
+       CONFIRM MODAL
        ============================================= */
     .modal-overlay {
       position: fixed;
@@ -1061,6 +1271,17 @@
         </svg>
         Audit
       </button>
+
+      <!-- Settings Icon -->
+      <button class="settings-btn" id="open-settings-btn" aria-label="Open settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+      </button>
     </nav>
 
     <!-- =============================================
@@ -1302,6 +1523,48 @@
   </div><!-- end .shell -->
 
   <!-- =============================================
+       SETTINGS MODAL
+       ============================================= -->
+  <div id="settings-overlay" class="settings-overlay">
+    <div class="settings-modal">
+      <div class="settings-header">
+        <div class="settings-title">Plugin Settings</div>
+        <button id="settings-close-btn" class="settings-close">&times;</button>
+      </div>
+      <div class="settings-body">
+
+        <div class="settings-row">
+          <div class="settings-row-icon">🔍</div>
+          <div class="settings-row-content">
+            <div class="settings-row-title">Auto-Zoom View</div>
+            <div class="settings-row-desc">Automatically center layers in view after cleanup</div>
+          </div>
+          <label class="modern-toggle">
+            <input type="checkbox" id="pref-auto-zoom" checked>
+            <span class="modern-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-icon">🙈</div>
+          <div class="settings-row-content">
+            <div class="settings-row-title">Ignore Hidden Layers</div>
+            <div class="settings-row-desc">Exclude hidden layers from Quality Audit scores</div>
+          </div>
+          <label class="modern-toggle">
+            <input type="checkbox" id="pref-ignore-hidden" checked>
+            <span class="modern-slider"></span>
+          </label>
+        </div>
+
+      </div>
+      <div class="settings-footer">
+        Settings are saved automatically to your device.
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
        CONFIRM MODAL
        ============================================= -->
   <div id="confirm-modal" class="modal-overlay">
@@ -1376,6 +1639,49 @@
       }
     });
 
+    // ─── Settings Modal & Preferences ─────────────────────────────────
+    const settingsBtn = document.getElementById('open-settings-btn');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const settingsCloseBtn = document.getElementById('settings-close-btn');
+
+    if (settingsBtn && settingsOverlay) {
+      settingsBtn.addEventListener('click', function () {
+        settingsOverlay.classList.add('show');
+      });
+    }
+
+    if (settingsCloseBtn && settingsOverlay) {
+      settingsCloseBtn.addEventListener('click', function () {
+        settingsOverlay.classList.remove('show');
+      });
+    }
+
+    // Close on click outside
+    if (settingsOverlay) {
+      settingsOverlay.addEventListener('click', function (e) {
+        if (e.target === settingsOverlay) {
+          settingsOverlay.classList.remove('show');
+        }
+      });
+    }
+
+    function savePreferences() {
+      const prefs = {
+        convention: document.getElementById('convention-select').value,
+        filterLocked: document.getElementById('filter-locked').checked,
+        filterHidden: document.getElementById('filter-hidden').checked,
+        filterDefault: document.getElementById('filter-default').checked,
+        autoZoom: document.getElementById('pref-auto-zoom').checked,
+        ignoreHidden: document.getElementById('pref-ignore-hidden').checked
+      };
+      parent.postMessage({ pluginMessage: { type: 'save-preferences', prefs } }, '*');
+    }
+
+    // Attach change listeners to all inputs to trigger save
+    document.querySelectorAll('input[type="checkbox"], select').forEach(el => {
+      el.addEventListener('change', savePreferences);
+    });
+
     // ─── Convention example ──────────────────────────────────────────
     const conventionSelect = document.getElementById('convention-select');
     const exampleEl = document.getElementById('convention-example');
@@ -1387,9 +1693,13 @@
       bem: 'button__primary--active',
     };
 
-    conventionSelect.addEventListener('change', () => {
-      exampleEl.textContent = EXAMPLES[conventionSelect.value] || EXAMPLES.atomic;
-    });
+    function updateExample() {
+      if (exampleEl && conventionSelect) {
+        exampleEl.textContent = EXAMPLES[conventionSelect.value] || EXAMPLES.atomic;
+      }
+    }
+
+    conventionSelect.addEventListener('change', updateExample);
 
     // ─── Auto-rename ─────────────────────────────────────────────────
     const autoRenameBtn = document.getElementById('auto-rename-btn');
@@ -1413,7 +1723,8 @@
     const removeHiddenBtn = document.getElementById('remove-hidden-btn');
     removeHiddenBtn?.addEventListener('click', () => {
       setLoading(removeHiddenBtn, true);
-      parent.postMessage({ pluginMessage: { type: 'check-hidden-layers' } }, '*');
+      const autoZoom = document.getElementById('pref-auto-zoom').checked;
+      parent.postMessage({ pluginMessage: { type: 'check-hidden-layers', prefs: { autoZoom } } }, '*');
     });
 
     const removeRedundantBtn = document.getElementById('remove-redundant-btn');
@@ -1428,13 +1739,15 @@
     unlockAllBtn?.addEventListener('click', () => {
       setLoading(unlockAllBtn, true);
       setTimeout(() => {
-        parent.postMessage({ pluginMessage: { type: 'unlock-all-layers' } }, '*');
+        const autoZoom = document.getElementById('pref-auto-zoom').checked;
+        parent.postMessage({ pluginMessage: { type: 'unlock-all-layers', prefs: { autoZoom } } }, '*');
       }, 50);
     });
 
     removeEmptyBtn?.addEventListener('click', () => {
       setLoading(removeEmptyBtn, true);
-      parent.postMessage({ pluginMessage: { type: 'check-empty-frames' } }, '*');
+      const autoZoom = document.getElementById('pref-auto-zoom').checked;
+      parent.postMessage({ pluginMessage: { type: 'check-empty-frames', prefs: { autoZoom } } }, '*');
     });
 
     // ─── Inspect / Scan ──────────────────────────────────────────────
@@ -1452,7 +1765,8 @@
         if (targetCard.classList.contains('clickable')) {
           const type = targetCard.dataset.type;
           if (type) {
-            parent.postMessage({ pluginMessage: { type: 'select-by-type', scanType: type } }, '*');
+            const autoZoom = document.getElementById('pref-auto-zoom').checked;
+            parent.postMessage({ pluginMessage: { type: 'select-by-type', scanType: type, prefs: { autoZoom } } }, '*');
           }
         }
       });
@@ -1463,7 +1777,8 @@
     const auditBtn = document.getElementById('audit-btn');
     auditBtn.addEventListener('click', () => {
       setLoading(auditBtn, true);
-      parent.postMessage({ pluginMessage: { type: 'quality-audit' } }, '*');
+      const ignoreHidden = document.getElementById('pref-ignore-hidden').checked;
+      parent.postMessage({ pluginMessage: { type: 'quality-audit', prefs: { ignoreHidden } } }, '*');
     });
 
     // ─── Render quality audit ────────────────────────────────────────
@@ -1610,11 +1925,26 @@
 
     // ─── Message handler ─────────────────────────────────────────────
     window.onmessage = event => {
-      const msg = event.data?.pluginMessage;
+      const msg = event.data && event.data.pluginMessage;
       if (!msg) return;
 
       try {
         switch (msg.type) {
+
+          case 'load-preferences':
+            if (msg.prefs) {
+              const p = msg.prefs;
+              if (p.convention) document.getElementById('convention-select').value = p.convention;
+              if (p.filterLocked !== undefined) document.getElementById('filter-locked').checked = p.filterLocked;
+              if (p.filterHidden !== undefined) document.getElementById('filter-hidden').checked = p.filterHidden;
+              if (p.filterDefault !== undefined) document.getElementById('filter-default').checked = p.filterDefault;
+              if (p.autoZoom !== undefined) document.getElementById('pref-auto-zoom').checked = p.autoZoom;
+              if (p.ignoreHidden !== undefined) document.getElementById('pref-ignore-hidden').checked = p.ignoreHidden;
+
+              // Trigger UI update for example text
+              updateExample();
+            }
+            break;
 
           case 'auto-rename-complete':
             setLoading(autoRenameBtn, false);

@@ -609,12 +609,12 @@ figma.ui.onmessage = async (msg) => {
         break;
 
       case 'select-by-type':
-        await handleSelectByType(msg.scanType);
+        await handleSelectByType(msg.scanType, msg.prefs);
         break;
 
       // MODULE 3: THE LINTER (Lead Level)
       case 'quality-audit':
-        await handleQualityAudit();
+        await handleQualityAudit(msg.prefs);
         break;
 
 
@@ -630,13 +630,13 @@ figma.ui.onmessage = async (msg) => {
 
       // CHECK DESTRUCTIVE ACTIONS (Pre-flight counts)
       case 'check-hidden-layers':
-        await handleCheckHiddenLayers();
+        await handleCheckHiddenLayers(msg.prefs);
         break;
       case 'check-redundant-wrappers':
-        await handleCheckRedundantWrappers();
+        await handleCheckRedundantWrappers(msg.prefs);
         break;
       case 'check-empty-frames':
-        await handleCheckEmptyFrames();
+        await handleCheckEmptyFrames(msg.prefs);
         break;
 
       // REMOVE HIDDEN LAYERS
@@ -648,7 +648,7 @@ figma.ui.onmessage = async (msg) => {
         break;
 
       case 'unlock-all-layers':
-        await handleUnlockAllLayers();
+        await handleUnlockAllLayers(msg.prefs);
         break;
 
       case 'remove-empty-frames':
@@ -1316,7 +1316,7 @@ async function handleAutoFixColor(nodeId, issueIndex, styleName) {
 // UTILITY: REMOVE HIDDEN LAYERS
 // Removes all hidden layers while protecting components
 // ========================================
-async function handleCheckHiddenLayers() {
+async function handleCheckHiddenLayers(prefs) {
   const selection = figma.currentPage.selection;
   if (selection.length === 0) {
     figma.ui.postMessage({ type: 'error', message: 'Please select at least one layer or frame' });
@@ -1362,7 +1362,7 @@ async function handleCheckHiddenLayers() {
 
   if (matchedNodes.length > 0) {
     figma.currentPage.selection = matchedNodes;
-    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
   }
 
   figma.ui.postMessage({
@@ -1446,7 +1446,7 @@ async function handleRemoveHiddenLayers() {
 // UTILITY: REMOVE REDUNDANT WRAPPERS
 // Un-groups frames/groups that contain only a single Text or Component
 // ========================================
-async function handleCheckRedundantWrappers() {
+async function handleCheckRedundantWrappers(prefs) {
   const selection = figma.currentPage.selection;
   if (selection.length === 0) {
     figma.ui.postMessage({ type: 'error', message: 'Select frames to clean' });
@@ -1477,7 +1477,7 @@ async function handleCheckRedundantWrappers() {
 
   if (matchedNodes.length > 0) {
     figma.currentPage.selection = matchedNodes;
-    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
   }
 
   figma.ui.postMessage({
@@ -1555,7 +1555,7 @@ async function handleRemoveRedundantWrappers() {
 // UTILITY: UNLOCK ALL LAYERS
 // Recursively unlocks all layers in selection
 // ========================================
-async function handleUnlockAllLayers() {
+async function handleUnlockAllLayers(prefs) {
   const selection = figma.currentPage.selection;
   if (selection.length === 0) {
     figma.ui.postMessage({ type: 'error', message: 'Select layers to unlock' });
@@ -1587,7 +1587,7 @@ async function handleUnlockAllLayers() {
 
   if (matchedNodes.length > 0) {
     figma.currentPage.selection = matchedNodes;
-    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
   }
 
   figma.ui.postMessage({ type: 'toast', message: `Unlocked ${matchedNodes.length} layer${matchedNodes.length !== 1 ? 's' : ''}` });
@@ -1597,7 +1597,7 @@ async function handleUnlockAllLayers() {
 // UTILITY: REMOVE EMPTY FRAMES
 // Recursively removes frames/groups with 0 children
 // ========================================
-async function handleCheckEmptyFrames() {
+async function handleCheckEmptyFrames(prefs) {
   const selection = figma.currentPage.selection;
   if (selection.length === 0) {
     figma.ui.postMessage({ type: 'error', message: 'Select scope for cleanup' });
@@ -1622,7 +1622,7 @@ async function handleCheckEmptyFrames() {
 
   if (matchedNodes.length > 0) {
     figma.currentPage.selection = matchedNodes;
-    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
   }
 
   figma.ui.postMessage({
@@ -1752,7 +1752,7 @@ async function handleScanFrame() {
 // ========================================
 let lastScannedRoot = null; // Store the roots from the last scan
 
-async function handleSelectByType(type) {
+async function handleSelectByType(type, prefs) {
   // Ensure the roots haven't been deleted or invalidated by Figma.
   let roots = [];
   if (lastScannedRoot && Array.isArray(lastScannedRoot) && lastScannedRoot.every(r => !r.removed)) {
@@ -1796,7 +1796,7 @@ async function handleSelectByType(type) {
 
   if (matchedNodes.length > 0) {
     figma.currentPage.selection = matchedNodes;
-    figma.viewport.scrollAndZoomIntoView(matchedNodes);
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
     figma.ui.postMessage({ type: 'toast', message: `Selected ${matchedNodes.length} ${type} layer${matchedNodes.length !== 1 ? 's' : ''}` });
   } else {
     figma.ui.postMessage({ type: 'toast', message: `No ${type} layers found` });
@@ -1806,7 +1806,7 @@ async function handleSelectByType(type) {
 // ========================================
 // QUALITY AUDIT (Lead Level)
 // Scans the selection for the three most
-async function handleQualityAudit() {
+async function handleQualityAudit(prefs) {
 
   const selection = figma.currentPage.selection;
 
@@ -1864,6 +1864,11 @@ async function handleQualityAudit() {
   let passedChecks = 0;
 
   for (const node of allNodes) {
+    // Check if user requested to ignore hidden layers in audit score
+    if (prefs && prefs.ignoreHidden && 'visible' in node && !node.visible) {
+      continue; // Skip hidden nodes in QA
+    }
+
     // Completely skip components and instances from all audit checks
     if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
       continue;
@@ -3267,14 +3272,17 @@ async function handleRedo() {
 
 // ========================================
 // LOAD PREFERENCES
-// Why: Restores user's last active tab
+// Why: Restores user's last active tab and saved settings
 // ========================================
 async function loadPreferences() {
   const tab = await figma.clientStorage.getAsync('lastActiveTab') || 'clean';
+  const prefs = await figma.clientStorage.getAsync('userSettings') || {};
 
+  // First tell UI to switch tab
   figma.ui.postMessage({
     type: 'load-preferences',
-    tab: tab
+    tab: tab,
+    prefs: prefs
   });
 }
 
