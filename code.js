@@ -433,7 +433,7 @@ figma.ui.onmessage = async (msg) => {
         if (msg.convention === 'architect') {
           await handleArchitectModeRename(msg.casing, msg.filters);
         } else {
-          await handleAutoRename(msg.casing, msg.convention, msg.filters);
+          await handleAutoRename(msg.casing, msg.convention, msg.filters, msg.prefs);
         }
         break;
 
@@ -707,7 +707,7 @@ figma.ui.onmessage = async (msg) => {
 // This automates the tedious task of renaming layers, teaching
 // multiple naming patterns: Atomic Design, Slash Structure, BEM, Component Library.
 // ========================================
-async function handleAutoRename(casing = 'pascal', convention = 'atomic', filters = {}) {
+async function handleAutoRename(casing = 'pascal', convention = 'atomic', filters = {}, prefs = {}) {
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
@@ -741,7 +741,7 @@ async function handleAutoRename(casing = 'pascal', convention = 'atomic', filter
 
     for (const node of nodesToRename) {
       try {
-        const newName = await generateName(node, casing, convention);
+        const newName = await generateName(node, casing, convention, prefs);
         if (newName && newName !== node.name) {
           node.name = newName;
           renamedCount++;
@@ -1851,14 +1851,26 @@ async function handleQualityAudit(prefs) {
     };
   };
 
+  const rgbToHex = (r, g, b) => {
+    const toHex = (c) => {
+      const hex = Math.round(c * 255).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return ('#' + toHex(r) + toHex(g) + toHex(b)).toUpperCase();
+  };
+
   // Run quality checks
   const errors = {
-    missingAltText: [],
     defaultNames: [],
     poorContrast: [],
     smallFonts: [],
-    smallTouchTargets: []
+    smallTouchTargets: [],
+    detachedTextStyles: [],
+    detachedColors: []
   };
+
+  const detachedFontsMap = {};
+  const detachedColorsMap = {};
 
   let totalChecks = 0;
   let passedChecks = 0;
@@ -1874,37 +1886,86 @@ async function handleQualityAudit(prefs) {
       continue;
     }
 
-    // Check 1: Missing Alt Text on Images
-    if (node.type === 'RECTANGLE' || node.type === 'ELLIPSE' || node.type === 'POLYGON') {
-      // Skip if ANY parent in the hierarchy is a component (nested components)
-      let currentNode = node.parent;
-      let isInsideComponent = false;
-      while (currentNode) {
-        if (currentNode.type === 'COMPONENT' || currentNode.type === 'INSTANCE' || currentNode.type === 'COMPONENT_SET') {
-          isInsideComponent = true;
-          break;
-        }
-        currentNode = currentNode.parent;
-      }
-      if (isInsideComponent) {
-        continue;
-      }
+    // --- NEW: Detached Style Checks ---
 
+    // Check Detached Fonts
+    if (node.type === 'TEXT') {
       totalChecks++;
-      if ('fills' in node && Array.isArray(node.fills)) {
-        const hasImageFill = node.fills.some(fill => fill.type === 'IMAGE');
-        if (hasImageFill && (!node.description || node.description.trim() === '')) {
-          errors.missingAltText.push({
-            id: node.id,
-            name: node.name,
-            issue: 'Missing alt text',
-            suggestion: 'Add description to this image layer for accessibility'
-          });
-        } else if (hasImageFill) {
-          passedChecks++;
+
+      const hasTypographyVariable = node.boundVariables && (
+        node.boundVariables.fontFamily !== undefined ||
+        node.boundVariables.fontSize !== undefined ||
+        node.boundVariables.fontWeight !== undefined ||
+        node.boundVariables.lineHeight !== undefined ||
+        node.boundVariables.letterSpacing !== undefined
+      );
+
+      if (!hasTypographyVariable && (!node.textStyleId || node.textStyleId === '' || node.textStyleId === figma.mixed)) {
+        let fontNameStr = 'Mixed or Unknown Font';
+        if (node.fontName && typeof node.fontName !== 'symbol') {
+          fontNameStr = `${node.fontName.family} ${node.fontName.style}`;
         }
+        if (!detachedFontsMap[fontNameStr]) {
+          detachedFontsMap[fontNameStr] = [];
+        }
+        detachedFontsMap[fontNameStr].push(node.id);
+      } else {
+        passedChecks++;
       }
     }
+
+    // Check Detached Colors (Fills & Strokes)
+    let hasDetachedColor = false;
+    let nodeHexCodes = [];
+
+    if ('fills' in node && Array.isArray(node.fills)) {
+      node.fills.forEach(f => {
+        const isColorBound = f.boundVariables && f.boundVariables.color !== undefined;
+        if (f.type === 'SOLID' && f.visible !== false && !isColorBound && (!node.fillStyleId || node.fillStyleId === '' || node.fillStyleId === figma.mixed)) {
+          hasDetachedColor = true;
+          if (f.color) nodeHexCodes.push(rgbToHex(f.color.r, f.color.g, f.color.b));
+        }
+      });
+    } else if (node.type === 'TEXT' && node.fills === figma.mixed) {
+      const segments = node.getStyledTextSegments(['fills', 'fillStyleId']);
+      segments.forEach(seg => {
+        if (Array.isArray(seg.fills)) {
+          seg.fills.forEach(f => {
+            const isColorBound = f.boundVariables && f.boundVariables.color !== undefined;
+            if (f.type === 'SOLID' && f.visible !== false && !isColorBound && (!seg.fillStyleId || seg.fillStyleId === '' || seg.fillStyleId === figma.mixed)) {
+              hasDetachedColor = true;
+              if (f.color) nodeHexCodes.push(rgbToHex(f.color.r, f.color.g, f.color.b));
+            }
+          });
+        }
+      });
+    }
+    if ('strokes' in node && Array.isArray(node.strokes)) {
+      node.strokes.forEach(s => {
+        const isColorBound = s.boundVariables && s.boundVariables.color !== undefined;
+        if (s.type === 'SOLID' && s.visible !== false && !isColorBound && (!node.strokeStyleId || node.strokeStyleId === '' || node.strokeStyleId === figma.mixed)) {
+          hasDetachedColor = true;
+          if (s.color) nodeHexCodes.push(rgbToHex(s.color.r, s.color.g, s.color.b));
+        }
+      });
+    }
+
+    if (hasDetachedColor) {
+      totalChecks++; // Only count the color check once per node for metrics
+      [...new Set(nodeHexCodes)].forEach(hex => {
+        if (!detachedColorsMap[hex]) detachedColorsMap[hex] = [];
+        detachedColorsMap[hex].push(node.id);
+      });
+    } else if ('fills' in node || 'strokes' in node) {
+      // If it has fills/strokes and none are detached, consider it a pass for color hygiene
+      // (Only count if it actually HAS styleable properties to keep totalChecks balanced)
+      if (('fills' in node && Array.isArray(node.fills) && node.fills.length > 0) ||
+        ('strokes' in node && Array.isArray(node.strokes) && node.strokes.length > 0)) {
+        totalChecks++;
+        passedChecks++;
+      }
+    }
+    // --- END NEW: Detached Style Checks ---
 
     // Check 2: Default Layer Names
     if (node.name.includes('Frame') || node.name.includes('Group') ||
@@ -2004,14 +2065,35 @@ async function handleQualityAudit(prefs) {
     }
   }
 
+  // Group Detached Fonts
+  for (const [font, ids] of Object.entries(detachedFontsMap)) {
+    errors.detachedTextStyles.push({
+      id: ids, // array of ids
+      name: font,
+      issue: `Used on ${ids.length} layer${ids.length > 1 ? 's' : ''}`,
+      suggestion: 'Connect to a typography style/variable'
+    });
+  }
+
+  // Group Detached Colors
+  for (const [hex, ids] of Object.entries(detachedColorsMap)) {
+    errors.detachedColors.push({
+      id: ids, // array of ids
+      name: hex,
+      issue: `Used on ${ids.length} layer${ids.length > 1 ? 's' : ''}`,
+      suggestion: 'Connect fill/stroke to a color style or variable'
+    });
+  }
+
+  // Sort them so most used is at top
+  errors.detachedTextStyles.sort((a, b) => b.id.length - a.id.length);
+  errors.detachedColors.sort((a, b) => b.id.length - a.id.length);
+
   // Calculate health score
   const healthScore = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 100;
 
   // Generate improvement tips based on errors
   const improvementTips = [];
-  if (errors.missingAltText.length > 0) {
-    improvementTips.push(`Add alt text to ${errors.missingAltText.length} image(s) for accessibility`);
-  }
   if (errors.defaultNames.length > 0) {
     improvementTips.push(`Rename ${errors.defaultNames.length} layer(s) with default names`);
   }
@@ -2023,6 +2105,12 @@ async function handleQualityAudit(prefs) {
   }
   if (errors.smallTouchTargets.length > 0) {
     improvementTips.push(`Enlarge ${errors.smallTouchTargets.length} touch target(s) to 44x44px`);
+  }
+  if (errors.detachedTextStyles.length > 0) {
+    improvementTips.push(`Connect ${errors.detachedTextStyles.length} text layer(s) to typography styles`);
+  }
+  if (errors.detachedColors.length > 0) {
+    improvementTips.push(`Connect ${errors.detachedColors.length} color(s) to styles or variables`);
   }
   if (healthScore === 100) {
     improvementTips.push('Perfect! Your design meets all quality standards.');
@@ -2425,9 +2513,9 @@ function collectAllNodes(node, collection) {
 // - Architect Mode (semantic layout)
 // ========================================
 
-async function generateName(node, casing = 'pascal', convention = 'atomic') {
+async function generateName(node, casing = 'pascal', convention = 'atomic', prefs = {}) {
   // First generate base name using atomic logic
-  let baseName = await generateAtomicName(node, casing);
+  let baseName = await generateAtomicName(node, casing, prefs);
 
   // If null, the node should be skipped (e.g. text with no connected style)
   if (baseName === null) return null;
@@ -2523,7 +2611,7 @@ function convertToBEM(name, casing) {
 // 4. Section = Multiple Containers
 // 5. Block = Multiple Sections
 // ========================================
-async function generateAtomicName(node, casing = 'pascal') {
+async function generateAtomicName(node, casing = 'pascal', prefs = {}) {
   // IMPORTANT: Don't rename design system components
   if (isDesignSystemComponent(node)) {
     return node.name; // Keep original name
@@ -2531,17 +2619,23 @@ async function generateAtomicName(node, casing = 'pascal') {
 
   let baseName = '';
 
-  // Level 1: TEXT - Rename based on connected style, or "Content" if no style
+  // Level 1: TEXT - Rename based on connected style, or by content if setting is ON, or fallback to content.
   if (node.type === 'TEXT') {
-    // If connected to a Local or Remote text style, use the style name exactly as-is
-    if (typeof node.textStyleId === 'string' && node.textStyleId.length > 0) {
-      const textStyle = await resolveTextStyle(node.textStyleId);
-      if (textStyle && textStyle.name) {
-        return textStyle.name; // Use the exact style name — no changes
-      }
+    // If user explicitly wants to use text content instead of style names
+    if (prefs && prefs.textRenameContent) {
+      baseName = node.characters.trim().substring(0, 40) || 'Content';
     }
-    // No style connected → fall back to "Content"
-    baseName = 'Content';
+    // Otherwise, try to use connected text style
+    else {
+      if (typeof node.textStyleId === 'string' && node.textStyleId.length > 0) {
+        const textStyle = await resolveTextStyle(node.textStyleId);
+        if (textStyle && textStyle.name) {
+          return textStyle.name; // Use the exact style name — no changes
+        }
+      }
+      // No style connected → fall back to the actual text content anyway (better than generic "Content")
+      baseName = node.characters.trim().substring(0, 40) || 'Content';
+    }
   }
   // LEVEL 1: IMAGES - Any image file
   else if (node.type === 'RECTANGLE' && hasFills(node) && hasImageFill(node)) {
@@ -2786,20 +2880,28 @@ function applyCasing(text, casing) {
 // LOCATE NODE HANDLER
 // Why: Allows users to click on errors and jump to the layer
 // ========================================
-async function handleLocateNode(nodeId) {
+async function handleLocateNode(nodeIdStr) {
   try {
-    const node = await figma.getNodeByIdAsync(nodeId);
+    const ids = nodeIdStr.split(',');
+    const nodesToSelect = [];
 
-    if (node) {
-      // Select the node
-      figma.currentPage.selection = [node];
+    for (const id of ids) {
+      if (!id) continue;
+      const node = await figma.getNodeByIdAsync(id);
+      if (node) nodesToSelect.push(node);
+    }
 
-      // Zoom to the node
-      figma.viewport.scrollAndZoomIntoView([node]);
+    if (nodesToSelect.length > 0) {
+      // Select the node(s)
+      figma.currentPage.selection = nodesToSelect;
 
+      // Zoom to the node(s)
+      figma.viewport.scrollAndZoomIntoView(nodesToSelect);
+
+      const nameStr = nodesToSelect.length === 1 ? nodesToSelect[0].name : `${nodesToSelect.length} layers`;
       figma.ui.postMessage({
         type: 'node-located',
-        nodeName: node.name
+        nodeName: nameStr
       });
     } else {
       figma.ui.postMessage({

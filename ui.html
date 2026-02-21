@@ -1477,13 +1477,14 @@
       <!-- Run button -->
       <!-- Run button -->
       <!-- Run button -->
-      <button id="audit-btn" class="btn btn-primary" style="margin-bottom: 24px; height: 36px;">
+      <!-- Run button -->
+      <button id="audit-btn" class="btn btn-primary" style="height: 36px;">
         <span class="btn-text">Run Quality Check</span>
         <span class="spinner" role="status" aria-label="Loading"></span>
       </button>
 
       <!-- Results (hidden until audit runs) -->
-      <div id="audit-results" class="hidden">
+      <div id="audit-results" class="hidden" style="display: flex; flex-direction: column; gap: 8px;">
         <!-- Health score card -->
         <div class="card">
           <div class="health-wrap">
@@ -1553,6 +1554,18 @@
           </div>
           <label class="modern-toggle">
             <input type="checkbox" id="pref-ignore-hidden" checked>
+            <span class="modern-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-icon">📝</div>
+          <div class="settings-row-content">
+            <div class="settings-row-title">Rename Text by Content</div>
+            <div class="settings-row-desc">Use actual text instead of font style names</div>
+          </div>
+          <label class="modern-toggle">
+            <input type="checkbox" id="pref-text-rename-content">
             <span class="modern-slider"></span>
           </label>
         </div>
@@ -1672,7 +1685,8 @@
         filterHidden: document.getElementById('filter-hidden').checked,
         filterDefault: document.getElementById('filter-default').checked,
         autoZoom: document.getElementById('pref-auto-zoom').checked,
-        ignoreHidden: document.getElementById('pref-ignore-hidden').checked
+        ignoreHidden: document.getElementById('pref-ignore-hidden').checked,
+        textRenameContent: document.getElementById('pref-text-rename-content').checked
       };
       parent.postMessage({ pluginMessage: { type: 'save-preferences', prefs } }, '*');
     }
@@ -1705,6 +1719,8 @@
     const autoRenameBtn = document.getElementById('auto-rename-btn');
     autoRenameBtn.addEventListener('click', () => {
       setLoading(autoRenameBtn, true);
+      const textRenameContent = document.getElementById('pref-text-rename-content')?.checked || false;
+
       parent.postMessage({
         pluginMessage: {
           type: 'auto-rename',
@@ -1714,7 +1730,8 @@
             skipLocked: document.getElementById('filter-locked')?.checked || false,
             skipHidden: document.getElementById('filter-hidden')?.checked || false,
             onlyDefaultNames: document.getElementById('filter-default')?.checked || false,
-          }
+          },
+          prefs: { textRenameContent }
         }
       }, '*');
     });
@@ -1814,8 +1831,9 @@
 
       const cats = [
         { key: 'poorContrast', label: 'Contrast Issues', badge: 'badge-amber', icon: '⚠️' },
-        { key: 'missingAltText', label: 'Missing Alt Text', badge: 'badge-red', icon: '🖼️' },
         { key: 'smallTouchTargets', label: 'Small Touch Targets', badge: 'badge-amber', icon: '👆' },
+        { key: 'detachedTextStyles', label: 'Detached Fonts', badge: 'badge-amber', icon: '📝' },
+        { key: 'detachedColors', label: 'Detached Colors', badge: 'badge-amber', icon: '🎨' },
         { key: 'smallFonts', label: 'Small Text', badge: 'badge-grey', icon: 'Aa' },
         { key: 'defaultNames', label: 'Default Layer Names', badge: 'badge-grey', icon: '🏷️' },
       ];
@@ -1835,7 +1853,7 @@
             <div class="coll-body">
               <div class="issue-items">
                 ${items.map(e => `
-                  <div class="issue-item" onclick="locateNode('${e.id}')">
+                  <div class="issue-item" onclick="locateNode('${Array.isArray(e.id) ? e.id.join(',') : e.id}')">
                     <div class="issue-left">
                       <span class="issue-item-name">${escHtml(e.name)}</span>
                       ${e.issue ? `<span class="issue-item-detail">${escHtml(e.issue)}</span>` : ''}
@@ -2030,6 +2048,29 @@
             if (msg.tab) {
               const btn = document.querySelector(`[data-tab="${msg.tab}"]`);
               if (btn) btn.click();
+            }
+            if (msg.prefs) {
+              if (msg.prefs.convention) {
+                const sel = document.getElementById('convention-select');
+                if (sel) {
+                  sel.value = msg.prefs.convention;
+                  updateExample();
+                }
+              }
+              const boolToggles = [
+                { id: 'filter-locked', val: msg.prefs.filterLocked },
+                { id: 'filter-hidden', val: msg.prefs.filterHidden },
+                { id: 'filter-default', val: msg.prefs.filterDefault },
+                { id: 'pref-auto-zoom', val: msg.prefs.autoZoom },
+                { id: 'pref-ignore-hidden', val: msg.prefs.ignoreHidden },
+                { id: 'pref-text-rename-content', val: msg.prefs.textRenameContent }
+              ];
+              boolToggles.forEach(t => {
+                if (t.val !== undefined) {
+                  const el = document.getElementById(t.id);
+                  if (el) el.checked = t.val;
+                }
+              });
             }
             break;
 
