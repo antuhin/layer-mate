@@ -367,8 +367,8 @@ async function generateNameWithOptions(node, options, index) {
   return name;
 }
 
-// Helper to collect renameable nodes
-function collectRenameableNodes(node, result, filters) {
+// Helper to collect renameable nodes (used by generateRenamePreview)
+function collectRenameableNodesSimple(node, result) {
   // Skip locked nodes
   if (node.locked) return;
 
@@ -380,7 +380,7 @@ function collectRenameableNodes(node, result, filters) {
   // Recursively collect from children
   if ('children' in node) {
     for (var i = 0; i < node.children.length; i++) {
-      collectRenameableNodes(node.children[i], result, filters);
+      collectRenameableNodesSimple(node.children[i], result);
     }
   }
 }
@@ -395,7 +395,7 @@ async function generateRenamePreview(options) {
 
   var nodesToRename = [];
   for (var i = 0; i < selection.length; i++) {
-    collectRenameableNodes(selection[i], nodesToRename, options.filters || {});
+    collectRenameableNodesSimple(selection[i], nodesToRename);
   }
 
   if (nodesToRename.length === 0) {
@@ -433,7 +433,7 @@ figma.ui.onmessage = async (msg) => {
         if (msg.convention === 'architect') {
           await handleArchitectModeRename(msg.casing, msg.filters);
         } else {
-          await handleAutoRename(msg.casing, msg.convention, msg.filters);
+          await handleAutoRename(msg.casing, msg.convention, msg.filters, msg.prefs);
         }
         break;
 
@@ -603,10 +603,20 @@ figma.ui.onmessage = async (msg) => {
         handleAssignRegion(msg.region);
         break;
 
+      // MODULE: INSPECT — Frame Stats Scanner
+      case 'scan-frame':
+        await handleScanFrame();
+        break;
+
+      case 'select-by-type':
+        await handleSelectByType(msg.scanType, msg.prefs);
+        break;
+
       // MODULE 3: THE LINTER (Lead Level)
       case 'quality-audit':
-        await handleQualityAudit();
+        await handleQualityAudit(msg.prefs);
         break;
+
 
       // MODULE 4: THE HANDOFF MANAGER (Manager Level)
       case 'set-frame-status':
@@ -618,12 +628,31 @@ figma.ui.onmessage = async (msg) => {
         await handleLocateNode(msg.nodeId);
         break;
 
+      // CHECK DESTRUCTIVE ACTIONS (Pre-flight counts)
+      case 'check-hidden-layers':
+        await handleCheckHiddenLayers(msg.prefs);
+        break;
+      case 'check-redundant-wrappers':
+        await handleCheckRedundantWrappers(msg.prefs);
+        break;
+      case 'check-empty-frames':
+        await handleCheckEmptyFrames(msg.prefs);
+        break;
+
       // REMOVE HIDDEN LAYERS
       case 'remove-hidden-layers':
         await handleRemoveHiddenLayers();
         break;
       case 'remove-redundant-wrappers':
         await handleRemoveRedundantWrappers();
+        break;
+
+      case 'unlock-all-layers':
+        await handleUnlockAllLayers(msg.prefs);
+        break;
+
+      case 'remove-empty-frames':
+        await handleRemoveEmptyFrames();
         break;
 
       // STATE PERSISTENCE
@@ -678,7 +707,7 @@ figma.ui.onmessage = async (msg) => {
 // This automates the tedious task of renaming layers, teaching
 // multiple naming patterns: Atomic Design, Slash Structure, BEM, Component Library.
 // ========================================
-async function handleAutoRename(casing = 'pascal', convention = 'atomic', filters = {}) {
+async function handleAutoRename(casing = 'pascal', convention = 'atomic', filters = {}, prefs = {}) {
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
@@ -703,56 +732,64 @@ async function handleAutoRename(casing = 'pascal', convention = 'atomic', filter
     return;
   }
 
-  // CAPTURE STATE BEFORE RENAMING (for undo)
-  const state = undoManager.captureState('rename', nodesToRename);
-
-  // Rename all collected nodes
   let renamedCount = 0;
-  const stats = {
-    text: 0,
-    shape: 0,
-    img: 0,
-    item: 0,
-    container: 0,
-    section: 0,
-    block: 0
-  };
+  const stats = { text: 0, shape: 0, img: 0, item: 0, container: 0, section: 0, block: 0 };
 
-  for (const node of nodesToRename) {
-    const newName = await generateName(node, casing, convention);
-    if (newName && newName !== node.name) {
-      node.name = newName;
-      renamedCount++;
+  try {
+    // CAPTURE STATE BEFORE RENAMING (for undo)
+    const state = undoManager.captureState('rename', nodesToRename);
 
-      // Track stats
-      const nameLower = newName.toLowerCase();
-      if (nameLower.includes('text')) stats.text++;
-      else if (nameLower.includes('shape')) stats.shape++;
-      else if (nameLower.includes('img')) stats.img++;
-      else if (nameLower.includes('item')) stats.item++;
-      else if (nameLower.includes('container')) stats.container++;
-      else if (nameLower.includes('section')) stats.section++;
-      else if (nameLower.includes('block')) stats.block++;
+    for (const node of nodesToRename) {
+      try {
+        const newName = await generateName(node, casing, convention, prefs);
+        if (newName && newName !== node.name) {
+          node.name = newName;
+          renamedCount++;
+          // Track stats
+          const nameLower = newName.toLowerCase();
+          if (nameLower.includes('text')) stats.text++;
+          else if (nameLower.includes('shape')) stats.shape++;
+          else if (nameLower.includes('img')) stats.img++;
+          else if (nameLower.includes('item')) stats.item++;
+          else if (nameLower.includes('container')) stats.container++;
+          else if (nameLower.includes('section')) stats.section++;
+          else if (nameLower.includes('block')) stats.block++;
+        }
+      } catch (nodeErr) {
+        // Skip this node if something goes wrong, continue with others
+        console.error('Error renaming node:', node.name, nodeErr);
+      }
+    }
+
+    // UPDATE STATE AFTER RENAMING (for undo)
+    undoManager.updateState(state, nodesToRename);
+  } finally {
+    // ALWAYS send completion — spinner must never be left stuck
+    figma.ui.postMessage({
+      type: 'auto-rename-complete',
+      count: renamedCount,
+      stats: stats,
+      canUndo: undoManager.canUndo(),
+      canRedo: undoManager.canRedo()
+    });
+
+    if (renamedCount > 0) {
+      figma.notify(`✅ Renamed ${renamedCount} layer${renamedCount !== 1 ? 's' : ''}`);
+    } else {
+      figma.notify('No layers renamed (already named correctly or filtered out)');
     }
   }
-
-  // UPDATE STATE AFTER RENAMING (for undo)
-  undoManager.updateState(state, nodesToRename);
-
-  // Send completion message with undo/redo status
-  figma.ui.postMessage({
-    type: 'auto-rename-complete',
-    count: renamedCount,
-    stats: stats,
-    canUndo: undoManager.canUndo(),
-    canRedo: undoManager.canRedo()
-  });
 }
 
 // ========================================
 // HELPER: COLLECT RENAMEABLE NODES WITH FILTERS
 // ========================================
 function collectRenameableNodes(node, collection, filters = {}) {
+  // Always skip components, component sets, and instances — never rename or traverse into them
+  if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET' || node.type === 'INSTANCE') {
+    return;
+  }
+
   // Apply smart filters
   if (shouldSkipNode(node, filters)) {
     return;
@@ -761,7 +798,7 @@ function collectRenameableNodes(node, collection, filters = {}) {
   // Add node to collection
   collection.push(node);
 
-  // Recursively collect children
+  // Recursively collect children (instances already returned above, so this is safe)
   if ('children' in node) {
     for (const child of node.children) {
       collectRenameableNodes(child, collection, filters);
@@ -789,6 +826,31 @@ function shouldSkipNode(node, filters) {
   }
 
   return false;
+}
+
+// ========================================
+// HELPER: RESOLVE TEXT STYLE (Local or Remote)
+// Uses a timeout to prevent importStyleByKeyAsync from hanging
+// ========================================
+async function resolveTextStyle(textStyleId) {
+  // 1. Try local style first (synchronous, instant)
+  try {
+    const local = figma.getStyleById(textStyleId);
+    if (local && local.name) return local;
+  } catch (e) { }
+
+  // 2. Try remote/library style import with a 3-second timeout
+  try {
+    const matches = textStyleId.match(/^S:([^,]+)/);
+    if (!matches || !matches[1]) return null;
+
+    const importPromise = figma.importStyleByKeyAsync(matches[1]);
+    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
+    const style = await Promise.race([importPromise, timeoutPromise]);
+    if (style && style.name) return style;
+  } catch (e) { }
+
+  return null;
 }
 
 // ========================================
@@ -1254,6 +1316,63 @@ async function handleAutoFixColor(nodeId, issueIndex, styleName) {
 // UTILITY: REMOVE HIDDEN LAYERS
 // Removes all hidden layers while protecting components
 // ========================================
+async function handleCheckHiddenLayers(prefs) {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Please select at least one layer or frame' });
+    return;
+  }
+
+  const matchedNodes = [];
+  let lockedCount = 0;
+  function collectHiddenLayers(node) {
+    // Check if the node is inside a component/instance hierarchy
+    let currentNode = node.parent;
+    let isInsideComponent = false;
+    while (currentNode) {
+      if (currentNode.type === 'COMPONENT' || currentNode.type === 'INSTANCE' || currentNode.type === 'COMPONENT_SET') {
+        isInsideComponent = true;
+        break;
+      }
+      currentNode = currentNode.parent;
+    }
+
+    // If it is NOT inside a component, check if it's hidden
+    if (!isInsideComponent && node.visible === false) {
+      if (node.locked) {
+        lockedCount++;
+      } else {
+        matchedNodes.push(node);
+      }
+    }
+
+    // Recurse into children ONLY if node itself is not a component/instance
+    if ('children' in node) {
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          collectHiddenLayers(child);
+        }
+      }
+    }
+  }
+
+  for (const node of selection) {
+    collectHiddenLayers(node);
+  }
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({
+    type: 'check-result',
+    action: 'remove-hidden-layers',
+    count: matchedNodes.length,
+    lockedCount: lockedCount
+  });
+}
+
 async function handleRemoveHiddenLayers() {
   const selection = figma.currentPage.selection;
 
@@ -1267,14 +1386,10 @@ async function handleRemoveHiddenLayers() {
 
   // Collect all hidden layers (excluding components)
   const hiddenLayers = [];
+  let lockedCount = 0;
 
   function collectHiddenLayers(node) {
-    // Skip if it's a component, instance, or component set
-    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
-      return;
-    }
-
-    // Skip if ANY parent in the hierarchy is a component (nested components)
+    // Check if the node is inside a component/instance hierarchy
     let currentNode = node.parent;
     let isInsideComponent = false;
     while (currentNode) {
@@ -1284,19 +1399,22 @@ async function handleRemoveHiddenLayers() {
       }
       currentNode = currentNode.parent;
     }
-    if (isInsideComponent) {
-      return;
+
+    // If it is NOT inside a component, check if it's hidden
+    if (!isInsideComponent && node.visible === false) {
+      if (node.locked) {
+        lockedCount++;
+      } else {
+        hiddenLayers.push(node);
+      }
     }
 
-    // If node is hidden and not a component, add to list
-    if (node.visible === false) {
-      hiddenLayers.push(node);
-    }
-
-    // Recurse into children
+    // Recurse into children ONLY if node itself is not a component/instance
     if ('children' in node) {
-      for (const child of node.children) {
-        collectHiddenLayers(child);
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          collectHiddenLayers(child);
+        }
       }
     }
   }
@@ -1319,7 +1437,8 @@ async function handleRemoveHiddenLayers() {
 
   figma.ui.postMessage({
     type: 'hidden-layers-removed',
-    count: removedCount
+    count: removedCount,
+    lockedCount: lockedCount
   });
 }
 
@@ -1327,6 +1446,47 @@ async function handleRemoveHiddenLayers() {
 // UTILITY: REMOVE REDUNDANT WRAPPERS
 // Un-groups frames/groups that contain only a single Text or Component
 // ========================================
+async function handleCheckRedundantWrappers(prefs) {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select frames to clean' });
+    return;
+  }
+
+  const matchedNodes = [];
+  function scanAndCount(node) {
+    if (node.locked) return;
+
+    if ('children' in node) {
+      const children = [...node.children];
+      for (const child of children) {
+        scanAndCount(child);
+      }
+    }
+
+    const isContainer = node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'SECTION';
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') return;
+
+    if (isContainer && 'children' in node && node.children.length === 1) {
+      if (!node.parent) return;
+      matchedNodes.push(node);
+    }
+  }
+
+  for (const node of selection) scanAndCount(node);
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({
+    type: 'check-result',
+    action: 'remove-redundant-wrappers',
+    count: matchedNodes.length
+  });
+}
+
 async function handleRemoveRedundantWrappers() {
   const selection = figma.currentPage.selection;
   if (selection.length === 0) {
@@ -1392,14 +1552,262 @@ async function handleRemoveRedundantWrappers() {
 }
 
 // ========================================
+// UTILITY: UNLOCK ALL LAYERS
+// Recursively unlocks all layers in selection
+// ========================================
+async function handleUnlockAllLayers(prefs) {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select layers to unlock' });
+    return;
+  }
+
+  const matchedNodes = [];
+  function unlockRecursive(node) {
+    // Skip if inside component instance logic prevents editing structure, 
+    // but locking is a property we can usually toggle unless locked by parent instance?
+    // Actually, we can unlock layers inside instances if it's an override.
+    try {
+      if (node.locked) {
+        node.locked = false;
+        matchedNodes.push(node);
+      }
+    } catch (e) { }
+
+    if ('children' in node) {
+      for (const child of node.children) {
+        unlockRecursive(child);
+      }
+    }
+  }
+
+  for (const node of selection) {
+    unlockRecursive(node);
+  }
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({ type: 'toast', message: `Unlocked ${matchedNodes.length} layer${matchedNodes.length !== 1 ? 's' : ''}` });
+}
+
+// ========================================
+// UTILITY: REMOVE EMPTY FRAMES
+// Recursively removes frames/groups with 0 children
+// ========================================
+async function handleCheckEmptyFrames(prefs) {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select scope for cleanup' });
+    return;
+  }
+
+  const matchedNodes = [];
+  function countEmptyRecursive(node) {
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') return;
+
+    if ('children' in node) {
+      for (const child of node.children) countEmptyRecursive(child);
+    }
+
+    const isContainer = node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'SECTION';
+    if (isContainer && node.children && node.children.length === 0) {
+      matchedNodes.push(node);
+    }
+  }
+
+  for (const node of selection) countEmptyRecursive(node);
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
+  }
+
+  figma.ui.postMessage({
+    type: 'check-result',
+    action: 'remove-empty-frames',
+    count: matchedNodes.length
+  });
+}
+
+async function handleRemoveEmptyFrames() {
+  const selection = figma.currentPage.selection;
+  if (selection.length === 0) {
+    figma.ui.postMessage({ type: 'error', message: 'Select scope for cleanup' });
+    return;
+  }
+
+  let count = 0;
+
+  // Bottom-up recursion to catch nested empty frames
+  function removeEmptyRecursive(node) {
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') return;
+
+    if ('children' in node) {
+      const children = [...node.children];
+      for (const child of children) {
+        removeEmptyRecursive(child);
+      }
+    }
+
+    // Check if empty container
+    const isContainer = node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'SECTION';
+    if (isContainer && node.children.length === 0) {
+      // Don't remove if it has a fill? Maybe user wants empty colored boxes?
+      // User requested "Empty Frames". Usually implies useless containers.
+      // But let's be safe: if it has forced explicit "Empty" intent, we remove it.
+      try {
+        node.remove();
+        count++;
+      } catch (e) { }
+    }
+  }
+
+  for (const node of selection) {
+    removeEmptyRecursive(node);
+  }
+
+  if (count === 0) {
+    figma.ui.postMessage({ type: 'toast', message: 'No empty frames found' });
+  } else {
+    figma.ui.postMessage({ type: 'toast', message: `Removed ${count} empty frames` });
+  }
+}
+
+// ========================================
 // MODULE 3: THE LINTER (LEAD LEVEL)
 // Career Stage: Lead Designer
 // Focus: Quality Control
 // Why: Leads ensure quality across the team. This audit catches
-// common mistakes: missing alt text (accessibility), default names
-// (poor organization), and contrast issues (usability).
 // ========================================
-async function handleQualityAudit() {
+// INSPECT — Frame Stats Scanner
+// Scans the selected frame (or the current page) and returns
+// counts for: total layers, hidden, locked, unnamed (default
+// names like "Frame 1", "Group 2", "Rectangle 3"), empty
+// frames/groups, and deeply nested layers (depth > 4).
+// ========================================
+async function handleScanFrame() {
+  // Determine root: use the selection array if > 0, otherwise fallback to page
+  const selection = figma.currentPage.selection;
+  const roots = selection.length > 0 ? [...selection] : [figma.currentPage];
+
+  // Store the roots so subsequent "select by type" requests scan the same area
+  // even if the user's selection changes after clicking the first stat.
+  lastScannedRoot = roots;
+
+  const DEFAULT_NAME_RE = /^(Frame|Group|Rectangle|Ellipse|Line|Vector|Polygon|Star|Component|Image|Text|Section)\s+\d+$/i;
+
+  let total = 0;
+  let hidden = 0;
+  let locked = 0;
+  let unnamed = 0;
+  let empty = 0;
+  let deeplyNested = 0;
+
+  function walk(node, depth, isRoot) {
+
+    // Don't count the root itself — only its descendants (unless requested otherwise)
+    if (!isRoot) {
+      total++;
+      if ('visible' in node && !node.visible) hidden++;
+      if ('locked' in node && node.locked) locked++;
+      if (DEFAULT_NAME_RE.test(node.name)) unnamed++;
+      if (depth > 4) deeplyNested++;
+
+      const hasChildren = 'children' in node && node.children.length === 0;
+      const isContainer = node.type === 'FRAME' || node.type === 'GROUP';
+      if (isContainer && hasChildren) empty++;
+    }
+
+    // Only traverse children if the node is not a component/instance
+    if ('children' in node) {
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          walk(child, depth + 1, false);
+        }
+      }
+    }
+  }
+
+  for (const rootNode of roots) {
+    walk(rootNode, 0, true);
+  }
+
+  let rootName = "Multiple Selections";
+  if (roots.length === 1) {
+    rootName = roots[0].type === 'PAGE' ? figma.currentPage.name : roots[0].name;
+  }
+
+  figma.ui.postMessage({
+    type: 'scan-frame-result',
+    rootName,
+    stats: { total, hidden, locked, unnamed, empty, deeplyNested }
+  });
+}
+
+// ========================================
+// SELECT SCANNED LAYERS BY TYPE
+// ========================================
+let lastScannedRoot = null; // Store the roots from the last scan
+
+async function handleSelectByType(type, prefs) {
+  // Ensure the roots haven't been deleted or invalidated by Figma.
+  let roots = [];
+  if (lastScannedRoot && Array.isArray(lastScannedRoot) && lastScannedRoot.every(r => !r.removed)) {
+    roots = lastScannedRoot;
+  } else {
+    roots = figma.currentPage.selection.length > 0 ? [...figma.currentPage.selection] : [figma.currentPage];
+  }
+
+  const DEFAULT_NAME_RE = /^(Frame|Group|Rectangle|Ellipse|Line|Vector|Polygon|Star|Component|Image|Text|Section)\s+\d+$/i;
+  const matchedNodes = [];
+
+  function walk(node, depth, isRoot) {
+
+    if (!isRoot) {
+      let match = false;
+      if (type === 'hidden' && 'visible' in node && !node.visible) match = true;
+      if (type === 'locked' && 'locked' in node && node.locked) match = true;
+      if (type === 'unnamed' && DEFAULT_NAME_RE.test(node.name)) match = true;
+      if (type === 'deeplyNested' && depth > 4) match = true;
+
+      const hasChildren = 'children' in node && node.children.length === 0;
+      const isContainer = node.type === 'FRAME' || node.type === 'GROUP';
+      if (type === 'empty' && isContainer && hasChildren) match = true;
+
+      if (match) matchedNodes.push(node);
+    }
+
+    // Only traverse children if the node is not a component/instance
+    if ('children' in node) {
+      if (node.type !== 'COMPONENT' && node.type !== 'INSTANCE' && node.type !== 'COMPONENT_SET') {
+        for (const child of node.children) {
+          walk(child, depth + 1, false);
+        }
+      }
+    }
+  }
+
+  for (const rootNode of roots) {
+    walk(rootNode, 0, true);
+  }
+
+  if (matchedNodes.length > 0) {
+    figma.currentPage.selection = matchedNodes;
+    if (prefs && prefs.autoZoom) figma.viewport.scrollAndZoomIntoView(matchedNodes);
+    figma.ui.postMessage({ type: 'toast', message: `Selected ${matchedNodes.length} ${type} layer${matchedNodes.length !== 1 ? 's' : ''}` });
+  } else {
+    figma.ui.postMessage({ type: 'toast', message: `No ${type} layers found` });
+  }
+}
+
+// ========================================
+// QUALITY AUDIT (Lead Level)
+// Scans the selection for the three most
+async function handleQualityAudit(prefs) {
+
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
@@ -1443,55 +1851,121 @@ async function handleQualityAudit() {
     };
   };
 
+  const rgbToHex = (r, g, b) => {
+    const toHex = (c) => {
+      const hex = Math.round(c * 255).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return ('#' + toHex(r) + toHex(g) + toHex(b)).toUpperCase();
+  };
+
   // Run quality checks
   const errors = {
-    missingAltText: [],
     defaultNames: [],
     poorContrast: [],
     smallFonts: [],
-    smallTouchTargets: []
+    smallTouchTargets: [],
+    detachedTextStyles: [],
+    detachedColors: []
   };
+
+  const detachedFontsMap = {};
+  const detachedColorsMap = {};
 
   let totalChecks = 0;
   let passedChecks = 0;
 
   for (const node of allNodes) {
-    // Check 1: Missing Alt Text on Images (Skip Components and Nested Components)
-    if (node.type === 'RECTANGLE' || node.type === 'ELLIPSE' || node.type === 'POLYGON') {
-      // Skip if it's a component or instance
-      if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
-        continue;
-      }
+    // Check if user requested to ignore hidden layers in audit score
+    if (prefs && prefs.ignoreHidden && 'visible' in node && !node.visible) {
+      continue; // Skip hidden nodes in QA
+    }
 
-      // Skip if ANY parent in the hierarchy is a component (nested components)
-      let currentNode = node.parent;
-      let isInsideComponent = false;
-      while (currentNode) {
-        if (currentNode.type === 'COMPONENT' || currentNode.type === 'INSTANCE' || currentNode.type === 'COMPONENT_SET') {
-          isInsideComponent = true;
-          break;
-        }
-        currentNode = currentNode.parent;
-      }
-      if (isInsideComponent) {
-        continue;
-      }
+    // Completely skip components and instances from all audit checks
+    if (node.type === 'COMPONENT' || node.type === 'INSTANCE' || node.type === 'COMPONENT_SET') {
+      continue;
+    }
 
+    // --- NEW: Detached Style Checks ---
+
+    // Check Detached Fonts
+    if (node.type === 'TEXT') {
       totalChecks++;
-      if ('fills' in node && Array.isArray(node.fills)) {
-        const hasImageFill = node.fills.some(fill => fill.type === 'IMAGE');
-        if (hasImageFill && (!node.description || node.description.trim() === '')) {
-          errors.missingAltText.push({
-            id: node.id,
-            name: node.name,
-            issue: 'Missing alt text',
-            suggestion: 'Add description to this image layer for accessibility'
-          });
-        } else if (hasImageFill) {
-          passedChecks++;
+
+      const hasTypographyVariable = node.boundVariables && (
+        node.boundVariables.fontFamily !== undefined ||
+        node.boundVariables.fontSize !== undefined ||
+        node.boundVariables.fontWeight !== undefined ||
+        node.boundVariables.lineHeight !== undefined ||
+        node.boundVariables.letterSpacing !== undefined
+      );
+
+      if (!hasTypographyVariable && (!node.textStyleId || node.textStyleId === '' || node.textStyleId === figma.mixed)) {
+        let fontNameStr = 'Mixed or Unknown Font';
+        if (node.fontName && typeof node.fontName !== 'symbol') {
+          fontNameStr = `${node.fontName.family} ${node.fontName.style}`;
         }
+        if (!detachedFontsMap[fontNameStr]) {
+          detachedFontsMap[fontNameStr] = [];
+        }
+        detachedFontsMap[fontNameStr].push(node.id);
+      } else {
+        passedChecks++;
       }
     }
+
+    // Check Detached Colors (Fills & Strokes)
+    let hasDetachedColor = false;
+    let nodeHexCodes = [];
+
+    if ('fills' in node && Array.isArray(node.fills)) {
+      node.fills.forEach(f => {
+        const isColorBound = f.boundVariables && f.boundVariables.color !== undefined;
+        if (f.type === 'SOLID' && f.visible !== false && !isColorBound && (!node.fillStyleId || node.fillStyleId === '' || node.fillStyleId === figma.mixed)) {
+          hasDetachedColor = true;
+          if (f.color) nodeHexCodes.push(rgbToHex(f.color.r, f.color.g, f.color.b));
+        }
+      });
+    } else if (node.type === 'TEXT' && node.fills === figma.mixed) {
+      const segments = node.getStyledTextSegments(['fills', 'fillStyleId']);
+      segments.forEach(seg => {
+        if (Array.isArray(seg.fills)) {
+          seg.fills.forEach(f => {
+            const isColorBound = f.boundVariables && f.boundVariables.color !== undefined;
+            if (f.type === 'SOLID' && f.visible !== false && !isColorBound && (!seg.fillStyleId || seg.fillStyleId === '' || seg.fillStyleId === figma.mixed)) {
+              hasDetachedColor = true;
+              if (f.color) nodeHexCodes.push(rgbToHex(f.color.r, f.color.g, f.color.b));
+            }
+          });
+        }
+      });
+    }
+    if ('strokes' in node && Array.isArray(node.strokes)) {
+      node.strokes.forEach(s => {
+        const isColorBound = s.boundVariables && s.boundVariables.color !== undefined;
+        if (s.type === 'SOLID' && s.visible !== false && !isColorBound && (!node.strokeStyleId || node.strokeStyleId === '' || node.strokeStyleId === figma.mixed)) {
+          hasDetachedColor = true;
+          if (s.color) nodeHexCodes.push(rgbToHex(s.color.r, s.color.g, s.color.b));
+        }
+      });
+    }
+
+    if (hasDetachedColor) {
+      totalChecks++; // Only count the color check once per node for metrics
+      [...new Set(nodeHexCodes)].forEach(hex => {
+        if (!detachedColorsMap[hex]) detachedColorsMap[hex] = [];
+        detachedColorsMap[hex].push(node.id);
+      });
+    } else if ('fills' in node || 'strokes' in node) {
+      // If it has fills/strokes and none are detached, consider it a pass for color hygiene
+      // (Only count if it actually HAS styleable properties to keep totalChecks balanced)
+      if (('fills' in node && Array.isArray(node.fills) && node.fills.length > 0) ||
+        ('strokes' in node && Array.isArray(node.strokes) && node.strokes.length > 0)) {
+        totalChecks++;
+        passedChecks++;
+      }
+    }
+    // --- END NEW: Detached Style Checks ---
 
     // Check 2: Default Layer Names
     if (node.name.includes('Frame') || node.name.includes('Group') ||
@@ -1575,8 +2049,7 @@ async function handleQualityAudit() {
     // Check 5: Touch Target Size
     const isInteractive = node.name.toLowerCase().includes('button') ||
       node.name.toLowerCase().includes('btn') ||
-      node.name.toLowerCase().includes('link') ||
-      (node.type === 'COMPONENT' || node.type === 'INSTANCE');
+      node.name.toLowerCase().includes('link');
     if (isInteractive) {
       totalChecks++;
       if (node.width < 44 || node.height < 44) {
@@ -1592,14 +2065,35 @@ async function handleQualityAudit() {
     }
   }
 
+  // Group Detached Fonts
+  for (const [font, ids] of Object.entries(detachedFontsMap)) {
+    errors.detachedTextStyles.push({
+      id: ids, // array of ids
+      name: font,
+      issue: `Used on ${ids.length} layer${ids.length > 1 ? 's' : ''}`,
+      suggestion: 'Connect to a typography style/variable'
+    });
+  }
+
+  // Group Detached Colors
+  for (const [hex, ids] of Object.entries(detachedColorsMap)) {
+    errors.detachedColors.push({
+      id: ids, // array of ids
+      name: hex,
+      issue: `Used on ${ids.length} layer${ids.length > 1 ? 's' : ''}`,
+      suggestion: 'Connect fill/stroke to a color style or variable'
+    });
+  }
+
+  // Sort them so most used is at top
+  errors.detachedTextStyles.sort((a, b) => b.id.length - a.id.length);
+  errors.detachedColors.sort((a, b) => b.id.length - a.id.length);
+
   // Calculate health score
   const healthScore = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 100;
 
   // Generate improvement tips based on errors
   const improvementTips = [];
-  if (errors.missingAltText.length > 0) {
-    improvementTips.push(`Add alt text to ${errors.missingAltText.length} image(s) for accessibility`);
-  }
   if (errors.defaultNames.length > 0) {
     improvementTips.push(`Rename ${errors.defaultNames.length} layer(s) with default names`);
   }
@@ -1611,6 +2105,12 @@ async function handleQualityAudit() {
   }
   if (errors.smallTouchTargets.length > 0) {
     improvementTips.push(`Enlarge ${errors.smallTouchTargets.length} touch target(s) to 44x44px`);
+  }
+  if (errors.detachedTextStyles.length > 0) {
+    improvementTips.push(`Connect ${errors.detachedTextStyles.length} text layer(s) to typography styles`);
+  }
+  if (errors.detachedColors.length > 0) {
+    improvementTips.push(`Connect ${errors.detachedColors.length} color(s) to styles or variables`);
   }
   if (healthScore === 100) {
     improvementTips.push('Perfect! Your design meets all quality standards.');
@@ -1984,47 +2484,19 @@ function collectAllNodes(node, collection) {
     const currentNode = stack.pop();
     collection.push(currentNode);
 
+    // Skip children of components/instances to avoid auditing their internals
     if ('children' in currentNode) {
-      for (let i = currentNode.children.length - 1; i >= 0; i--) {
-        stack.push(currentNode.children[i]);
+      if (currentNode.type !== 'COMPONENT' && currentNode.type !== 'INSTANCE' && currentNode.type !== 'COMPONENT_SET') {
+        for (let i = currentNode.children.length - 1; i >= 0; i--) {
+          stack.push(currentNode.children[i]);
+        }
       }
     }
   }
 }
 
-// ========================================
-// HELPER: COLLECT RENAMEABLE NODES
-// Why: Recursively collects nodes that can be renamed
-// Constraint: Skips components and instances
-// ========================================
-function collectRenameableNodes(node, collection) {
-  const stack = [node];
 
-  while (stack.length > 0) {
-    const currentNode = stack.pop();
 
-    if (isRenameable(currentNode)) {
-      collection.push(currentNode);
-    }
-
-    if ('children' in currentNode) {
-      for (let i = currentNode.children.length - 1; i >= 0; i--) {
-        stack.push(currentNode.children[i]);
-      }
-    }
-  }
-}
-
-// ========================================
-// HELPER: IS RENAMEABLE CHECK
-// Why: Protects component masters and instances
-// ========================================
-function isRenameable(node) {
-  if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET' || node.type === 'INSTANCE') {
-    return false;
-  }
-  return true;
-}
 // ========================================
 // ATOMIC NAME GENERATION ALGORITHM
 // Why: Applies Atomic Design principles to layer naming
@@ -2041,9 +2513,12 @@ function isRenameable(node) {
 // - Architect Mode (semantic layout)
 // ========================================
 
-async function generateName(node, casing = 'pascal', convention = 'atomic') {
+async function generateName(node, casing = 'pascal', convention = 'atomic', prefs = {}) {
   // First generate base name using atomic logic
-  let baseName = await generateAtomicName(node, casing);
+  let baseName = await generateAtomicName(node, casing, prefs);
+
+  // If null, the node should be skipped (e.g. text with no connected style)
+  if (baseName === null) return null;
 
   // Apply convention-specific transformations
   switch (convention) {
@@ -2136,7 +2611,7 @@ function convertToBEM(name, casing) {
 // 4. Section = Multiple Containers
 // 5. Block = Multiple Sections
 // ========================================
-async function generateAtomicName(node, casing = 'pascal') {
+async function generateAtomicName(node, casing = 'pascal', prefs = {}) {
   // IMPORTANT: Don't rename design system components
   if (isDesignSystemComponent(node)) {
     return node.name; // Keep original name
@@ -2144,47 +2619,22 @@ async function generateAtomicName(node, casing = 'pascal') {
 
   let baseName = '';
 
-  // Level 1: TEXT - Check if connected to text style
+  // Level 1: TEXT - Rename based on connected style, or by content if setting is ON, or fallback to content.
   if (node.type === 'TEXT') {
-    // Check if textStyleId is a valid string (not mixed, not empty)
-    if (typeof node.textStyleId === 'string' && node.textStyleId.length > 0) {
-      let textStyle = null;
-      try {
-        // Try getting local/used style first
-        textStyle = figma.getStyleById(node.textStyleId);
-      } catch (e) { }
-
-      // If not found, try importing by Key (Remote Style)
-      if (!textStyle) {
-        try {
-          // textStyleId format is usually "S:Key," or just "S:Key"
-          // Attempt to extract key
-          const matches = node.textStyleId.match(/^S:([^,]+)/);
-          if (matches && matches[1]) {
-            textStyle = await figma.importStyleByKeyAsync(matches[1]);
-          }
-        } catch (e) {
-          // Import failed
+    // If user explicitly wants to use text content instead of style names
+    if (prefs && prefs.textRenameContent) {
+      baseName = node.characters.trim().substring(0, 40) || 'Content';
+    }
+    // Otherwise, try to use connected text style
+    else {
+      if (typeof node.textStyleId === 'string' && node.textStyleId.length > 0) {
+        const textStyle = await resolveTextStyle(node.textStyleId);
+        if (textStyle && textStyle.name) {
+          return textStyle.name; // Use the exact style name — no changes
         }
       }
-
-      if (textStyle && textStyle.name) {
-        // Rule: Use Root Category + "Text"
-        // Example: "Heading/H1" -> "Heading" -> "HeadingText" (or "heading-text")
-        const rootName = textStyle.name.split('/')[0].trim();
-        const standardizedName = `${rootName} Text`;
-
-        const formattedName = applyCasing(standardizedName, casing);
-        return formattedName || standardizedName;
-      }
-    }
-    // Fallback: Use content if no style found
-    // "Atomic Renaming: Rename Text layers to their content"
-    const content = getTextContent(node);
-    if (content) {
-      baseName = sanitizeText(content);
-    } else {
-      baseName = 'Text';
+      // No style connected → fall back to the actual text content anyway (better than generic "Content")
+      baseName = node.characters.trim().substring(0, 40) || 'Content';
     }
   }
   // LEVEL 1: IMAGES - Any image file
@@ -2199,6 +2649,10 @@ async function generateAtomicName(node, casing = 'pascal') {
   }
   // LEVEL 2-5: HIERARCHICAL - Groups/Frames/Auto Layouts
   else if ((node.type === 'FRAME' || node.type === 'GROUP') && 'children' in node) {
+    // Skip top-level frames (direct children of the page — Mobile/Tablet/Desktop frames)
+    if (node.parent && node.parent.type === 'PAGE') {
+      return node.name; // Keep name as-is
+    }
     baseName = determineHierarchyLevel(node);
   }
   else {
@@ -2213,10 +2667,6 @@ async function generateAtomicName(node, casing = 'pascal') {
 // Analyzes nesting depth to assign correct level
 // ========================================
 function determineHierarchyLevel(node) {
-  if (!('children' in node) || node.children.length === 0) {
-    return 'Content';
-  }
-
   // Count how many children are groups/frames (nested levels)
   let nestedGroupCount = 0;
   let maxChildDepth = 0;
@@ -2229,17 +2679,19 @@ function determineHierarchyLevel(node) {
     }
   }
 
-  // Determine level based on nesting depth
-  if (maxChildDepth >= 3) {
-    return 'Block';        // Multiple Sections
-  } else if (maxChildDepth === 2) {
-    return 'Section';      // Multiple Containers
+  // New hierarchy:
+  // item      = 1st group / leaf frame (no nested group children)
+  // container = frame that holds multiple items (1 level deep)
+  // section   = holds multiple containers (2 levels deep)
+  // block     = holds multiple sections (3+ levels deep)
+  if (maxChildDepth >= 2) {
+    return 'Block';        // Holds sections
   } else if (maxChildDepth === 1) {
-    return 'Container';    // Multiple Items
+    return 'Section';      // Holds containers
   } else if (nestedGroupCount > 0) {
-    return 'Item';         // Multiple Content
+    return 'Container';    // Holds items
   } else {
-    return 'Content';      // Single elements
+    return 'Item';         // Leaf frame / 1st group
   }
 }
 
@@ -2428,20 +2880,28 @@ function applyCasing(text, casing) {
 // LOCATE NODE HANDLER
 // Why: Allows users to click on errors and jump to the layer
 // ========================================
-async function handleLocateNode(nodeId) {
+async function handleLocateNode(nodeIdStr) {
   try {
-    const node = await figma.getNodeByIdAsync(nodeId);
+    const ids = nodeIdStr.split(',');
+    const nodesToSelect = [];
 
-    if (node) {
-      // Select the node
-      figma.currentPage.selection = [node];
+    for (const id of ids) {
+      if (!id) continue;
+      const node = await figma.getNodeByIdAsync(id);
+      if (node) nodesToSelect.push(node);
+    }
 
-      // Zoom to the node
-      figma.viewport.scrollAndZoomIntoView([node]);
+    if (nodesToSelect.length > 0) {
+      // Select the node(s)
+      figma.currentPage.selection = nodesToSelect;
 
+      // Zoom to the node(s)
+      figma.viewport.scrollAndZoomIntoView(nodesToSelect);
+
+      const nameStr = nodesToSelect.length === 1 ? nodesToSelect[0].name : `${nodesToSelect.length} layers`;
       figma.ui.postMessage({
         type: 'node-located',
-        nodeName: node.name
+        nodeName: nameStr
       });
     } else {
       figma.ui.postMessage({
@@ -2914,14 +3374,17 @@ async function handleRedo() {
 
 // ========================================
 // LOAD PREFERENCES
-// Why: Restores user's last active tab
+// Why: Restores user's last active tab and saved settings
 // ========================================
 async function loadPreferences() {
   const tab = await figma.clientStorage.getAsync('lastActiveTab') || 'clean';
+  const prefs = await figma.clientStorage.getAsync('userSettings') || {};
 
+  // First tell UI to switch tab
   figma.ui.postMessage({
     type: 'load-preferences',
-    tab: tab
+    tab: tab,
+    prefs: prefs
   });
 }
 
