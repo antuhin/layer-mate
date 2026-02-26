@@ -2508,87 +2508,92 @@ function convertToSemantic(node, baseName) {
     const w = node.width || 0;
     const h = node.height || 0;
 
-    // Empty frame
     if (childCount === 0) return 'placeholder';
 
     // ── Top-level frames (direct children of page) ──────────────────
-    // Use spatial/positional names — we can't reliably know the PURPOSE.
     if (isTopLevel) {
-      if (isHoriz && h < 100 && h > 0) return 'top-bar';   // short horizontal = top-bar
-      if (isVert && w < 300 && w > 0) return 'side-panel'; // narrow vertical = side panel
-      return 'section'; // everything else = a named section
+      if (isHoriz && h < 100 && h > 0) return 'top-bar';
+      if (isVert && w < 300 && w > 0) return 'side-panel';
+      return 'section';
     }
 
-    // ── Classify children ────────────────────────────────────────────
+    // ── Child classification ─────────────────────────────────────────
     const frameKids = children.filter(c => c.type === 'FRAME' || c.type === 'GROUP' ||
       c.type === 'COMPONENT' || c.type === 'INSTANCE');
     const textKids = children.filter(c => c.type === 'TEXT');
     const vectorKids = children.filter(c => c.type === 'VECTOR' || c.type === 'STAR' ||
       c.type === 'POLYGON' || c.type === 'LINE');
     const imageKids = children.filter(c => hasImageFill(c));
-
-    // Safe corner radius (may be 'mixed' symbol)
     const cr = typeof node.cornerRadius === 'number' ? node.cornerRadius : 0;
 
-    // ── Badge / Chip — small, pill-shaped ───────────────────────────
-    if (h > 0 && h < 40 && w < 200 && cr >= h / 2 && childCount <= 3) {
-      return 'badge';
-    }
+    // ── SIGNAL A: Drop Shadow ──────────────────────────────────────
+    // The #1 indicator of a floating/elevated component (card, popup, panel).
+    // Flat layout elements (rows, sections, wrappers) rarely have shadows.
+    const effects = Array.isArray(node.effects) ? node.effects : [];
+    const hasShadow = effects.some(e => e.type === 'DROP_SHADOW' && e.visible !== false);
 
-    // ── Avatar — square/circle frame with image or initials ─────────
-    if (Math.abs(w - h) <= 4 && cr >= w / 2) {
-      return imageKids.length > 0 ? 'avatar' : 'avatar';
-    }
+    // ── SIGNAL B: Visible Stroke (border) ──────────────────────────
+    // Input fields, bordered cards, and panels have explicit strokes.
+    const strokes = Array.isArray(node.strokes) ? node.strokes : [];
+    const hasStroke = strokes.some(s => s.visible !== false && (s.opacity == null || s.opacity > 0.1));
 
-    // ── Icon button — tiny frame + single vector ─────────────────────
-    if (vectorKids.length > 0 && childCount === 1 && w < 56 && h < 56) {
-      return 'icon-btn';
-    }
-
-    // ── Button — MUST have background fill + padding (real interactive button)
-    // Without these, it's just a row/label/text group, not a button.
+    // ── SIGNAL C: Fill + Padding ───────────────────────────────────
     const fills = Array.isArray(node.fills) ? node.fills : [];
     const hasVisibleFill = fills.some(f => f.type === 'SOLID' && (f.opacity == null || f.opacity > 0.05));
     const hasPadding = (node.paddingLeft || 0) > 4 || (node.paddingRight || 0) > 4;
-    if (h < 56 && h > 0 && hasVisibleFill && hasPadding && textKids.length >= 1 && frameKids.length === 0) {
-      return 'btn';
+
+    // ── Badge / Chip — small, pill-shape ────────────────────────────
+    if (h > 0 && h < 40 && w < 200 && cr >= h / 2 && childCount <= 3) return 'badge';
+
+    // ── Avatar — perfectly round/square frame ───────────────────────
+    if (Math.abs(w - h) <= 4 && w > 0 && cr >= w / 2) return 'avatar';
+
+    // ── Icon button — tiny frame with a single vector ────────────────
+    if (vectorKids.length > 0 && childCount === 1 && w < 56 && h < 56) return 'icon-btn';
+
+    // ── Input field — stroke + no fill + short + wide ────────────────
+    // Input fields are bordered, usually unfilled, short (<64px), wider than tall.
+    if (hasStroke && !hasVisibleFill && h > 0 && h < 64 && w > h * 2) return 'input';
+
+    // ── Button / CTA ─────────────────────────────────────────────────
+    // Must have: fill + padding + small height + SHORT text (≤30 chars).
+    // Long text (>30 chars) = label/row/content, not a button.
+    const allText = textKids.map(t => { try { return t.characters || ''; } catch (e) { return ''; } }).join(' ');
+    const isShortLabel = allText.trim().length > 0 && allText.trim().length <= 30;
+    if (h < 56 && h > 0 && hasVisibleFill && hasPadding && isShortLabel && frameKids.length === 0) {
+      return hasShadow ? 'cta-btn' : 'btn'; // shadowed btn = primary CTA
     }
 
-    // ── Tabs / Nav strip — horizontal, 3+ child frames ───────────────
-    // We CANNOT reliably distinguish tabs from a session list, a card row,
-    // or any other horizontal group. So fall through to 'row'.
+    // ── Card — shadow + image + content (high confidence) ────────────
+    if (hasShadow && imageKids.length > 0 && (textKids.length > 0 || frameKids.length > 0)) {
+      return 'card';
+    }
 
-    // ── Toolbar — now part of the general row fallback ────────────────
-    // (Previously detected by w/h ratio, too many false positives.)
+    // ── Popup — shadow + small + rounded (tooltip / dropdown / popover)
+    if (hasShadow && w < 300 && h < 200 && cr >= 8) return 'popup';
 
-    // ── Content block — image + content stacked ───────────────────────
-    // 'card' is too loaded a term — same structure can be a product card,
-    // a profile tile, a media block. Use neutral 'content-block' instead.
+    // ── Panel — (shadow OR stroke) + large + rounded ──────────────────
+    if ((hasShadow || hasStroke) && w > 300 && h > 200 && cr >= 8 && frameKids.length >= 2) {
+      return 'panel';
+    }
+
+    // ── Content block — image + content without shadow (flat) ─────────
     if (imageKids.length > 0 && (textKids.length > 0 || frameKids.length > 0)) {
       return 'content-block';
     }
 
-    // ── Panel — large contained area ──────────────────────────────────
-    // 'modal' implies intent (overlay dialog) which we can't detect.
-    // 'panel' just says: a contained, bordered section. Always correct.
-    if (w > 300 && h > 200 && cr >= 8 && frameKids.length >= 2) return 'panel';
-
-    // ── List/stack — vertical group of frames ────────────────────────
-    // 'list' implies a specific UX pattern; 'stack' just means vertically
-    // stacked — always structurally accurate.
+    // ── Stack — vertical group of repeated child frames ───────────────
     if (isVert && frameKids.length >= 2) return 'stack';
 
-    // ── Row — generic horizontal group ───────────────────────────────
-    // Replaces tabs, toolbar, nav-strip — all are "rows" structurally.
+    // ── Row — any horizontal layout group ────────────────────────────
     if (isHoriz) return 'row';
 
-    // ── Stack — generic vertical group ───────────────────────────────
+    // ── Stack — any vertical layout group ────────────────────────────
     if (isVert) return 'stack';
 
-    // ── Wrapper — single child container ────────────────────────────
+    // ── Wrapper — single-child container ──────────────────────────────
     if (childCount === 1) return 'wrapper';
 
-    // ── Fallback ─────────────────────────────────────────────────────
     return 'group';
   }
 
