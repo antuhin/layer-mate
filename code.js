@@ -307,8 +307,8 @@ figma.ui.onmessage = async (msg) => {
     switch (msg.type) {
       // MODULE 1: THE CLEANER (Junior Level)
       case 'auto-rename':
-        // Check if Architect Mode is selected - use Flexbox-aware logic
-        if (msg.convention === 'architect') {
+        // Check if Handoff Mode is selected
+        if (msg.convention === 'handoff') {
           await handleArchitectModeRename(msg.casing, msg.filters);
         } else {
           await handleAutoRename(msg.casing, msg.convention, msg.filters, msg.prefs);
@@ -2331,7 +2331,7 @@ function collectAllNodes(node, collection) {
 // ========================================
 
 async function generateName(node, casing = 'pascal', convention = 'atomic', prefs = {}) {
-  // First generate base name using atomic logic
+  // First generate base name using atomic/hierarchical logic
   let baseName = await generateAtomicName(node, casing, prefs);
 
   // If null, the node should be skipped (e.g. text with no connected style)
@@ -2339,76 +2339,163 @@ async function generateName(node, casing = 'pascal', convention = 'atomic', pref
 
   // Apply convention-specific transformations
   switch (convention) {
-    case 'slash':
-      baseName = convertToSlash(baseName);
+    case 'component':
+      baseName = convertToComponent(baseName);
       break;
-    case 'bem':
-      baseName = convertToBEM(baseName, casing);
+    case 'token':
+      baseName = convertToToken(node, baseName);
       break;
-    case 'architect':
-      baseName = convertToArchitect(baseName);
+    case 'handoff':
+      baseName = convertToHandoff(node, baseName);
       break;
-    // 'atomic' uses the base name as-is
+    // 'atomic' (Hierarchical) uses the base name as-is
   }
 
   return baseName;
 }
 
 // ========================================
-// HELPER: CONVERT TO SLASH STRUCTURE
-// Example: ButtonPrimary → Button / Primary
+// CONVENTION: COMPONENT (replaces Slash)
+// Groups related layers for component libraries.
+// Detects common word prefix and produces Figma slash notation.
+// Example: "ButtonPrimary" → "Button / Primary"
+//          "card-hero"     → "Card / Hero"
 // ========================================
-function convertToSlash(name) {
-  // Split on capital letters or existing slashes
-  let result = name.replace(/([a-z])([A-Z])/g, '$1 / $2');
+function convertToComponent(name) {
+  // Normalize: remove existing slashes, replace hyphens/underscores with spaces
+  let normalized = name.replace(/\s*\/\s*/g, ' ').replace(/[-_]/g, ' ').trim();
 
-  // Handle existing slashes - ensure spaces
-  result = result.replace(/\s*\/\s*/g, ' / ');
+  // Split on spaces or PascalCase boundaries
+  const words = normalized
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase split
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
-  // Handle hyphens and underscores
-  result = result.replace(/[-_]/g, ' / ');
-
-  return result;
-}
-
-// ========================================
-// HELPER: CONVERT TO ARCHITECT (CAREER OS)
-// Standard: Folder Syntax + PascalCase
-// Example: "button primary" -> "Button / Primary"
-// ========================================
-function convertToArchitect(name) {
-  // First convert to slash structure
-  const slashed = convertToSlash(name);
-
-  // Then PascalCase each segment
-  return slashed.split(' / ').map(part => {
-    // Handle empty parts
-    if (!part) return '';
-    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-  }).join(' / ');
-}
-
-// ========================================
-// HELPER: CONVERT TO BEM
-// Example: ButtonPrimary → button__primary
-// ========================================
-function convertToBEM(name, casing) {
-  // Remove existing separators
-  let cleaned = name.replace(/[-_\/\s]/g, '');
-
-  // Split on capital letters
-  const words = cleaned.split(/(?=[A-Z])/);
-
-  if (words.length === 1) {
-    // Single word - just lowercase
-    return words[0].toLowerCase();
+  if (words.length <= 1) {
+    return words[0] || name;
   }
 
-  // First word is block, rest are elements
-  const block = words[0].toLowerCase();
-  const elements = words.slice(1).map(w => w.toLowerCase()).join('-');
+  // First word = group (component name), rest = variant
+  const group = words[0];
+  const variant = words.slice(1).join(' ');
+  return `${group} / ${variant}`;
+}
 
-  return `${block}__${elements}`;
+// ========================================
+// CONVENTION: HANDOFF (replaces Architect)
+// Produces semantic HTML-like names developers can map directly.
+// Reads node structure: layout mode, fills, type, depth.
+// Examples:
+//   Auto-layout horizontal  → nav / {name}
+//   Auto-layout vertical    → list / {name}
+//   Image fill              → img / {name}
+//   VECTOR / SHAPE          → icon / {name}
+//   TEXT                    → text / {name}
+//   Top-level FRAME         → section / {name}
+//   Generic FRAME           → card / {name}
+// ========================================
+function convertToHandoff(node, baseName) {
+  // Normalize base name to kebab-case for HTML readability
+  const kebab = baseName
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[\s_/]+/g, '-')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'layer';
+
+  // VECTOR / SHAPES → icon
+  if (node.type === 'VECTOR' || node.type === 'STAR' || node.type === 'POLYGON' ||
+    node.type === 'ELLIPSE' || node.type === 'LINE') {
+    return `icon/${kebab}`;
+  }
+
+  // TEXT → text
+  if (node.type === 'TEXT') {
+    return `text/${kebab}`;
+  }
+
+  // RECTANGLE with image fill → img
+  if (node.type === 'RECTANGLE' && hasImageFill(node)) {
+    return `img/${kebab}`;
+  }
+
+  // FRAME / GROUP — detect by layout
+  if ((node.type === 'FRAME' || node.type === 'GROUP') && 'children' in node) {
+    // Top-level frames (direct children of page) → section
+    if (node.parent && node.parent.type === 'PAGE') {
+      return `section/${kebab}`;
+    }
+
+    // Auto-layout horizontal → nav
+    if ('layoutMode' in node && node.layoutMode === 'HORIZONTAL') {
+      // Check if it looks like a navigation bar (single row of items)
+      const childCount = node.children ? node.children.length : 0;
+      return childCount >= 3 ? `nav/${kebab}` : `hstack/${kebab}`;
+    }
+
+    // Auto-layout vertical → list
+    if ('layoutMode' in node && node.layoutMode === 'VERTICAL') {
+      return `list/${kebab}`;
+    }
+
+    // Generic frame → card or wrapper
+    const childCount = node.children ? node.children.length : 0;
+    return childCount <= 2 ? `wrapper/${kebab}` : `card/${kebab}`;
+  }
+
+  return kebab;
+}
+
+// ========================================
+// CONVENTION: TOKEN (replaces BEM)
+// Produces design-token-style paths (category/name).
+// Compatible with Tokens Studio and style-dictionary.
+// Examples:
+//   TEXT with style   → text/heading-1
+//   IMAGE fill        → asset/img
+//   VECTOR            → icon/arrow
+//   FRAME (top-level) → layout/hero
+//   FRAME (child)     → component/card
+// ========================================
+function convertToToken(node, baseName) {
+  // Normalize to token-style path segment (kebab, no slashes)
+  const tokenName = baseName
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .replace(/\/+/g, '-')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'layer';
+
+  // TEXT → text/{name}
+  if (node.type === 'TEXT') {
+    return `text/${tokenName}`;
+  }
+
+  // VECTOR / SHAPES → icon/{name}
+  if (node.type === 'VECTOR' || node.type === 'STAR' || node.type === 'POLYGON' ||
+    node.type === 'ELLIPSE' || node.type === 'LINE') {
+    return `icon/${tokenName}`;
+  }
+
+  // RECTANGLE with image → asset/{name}
+  if (node.type === 'RECTANGLE' && hasImageFill(node)) {
+    return `asset/${tokenName}`;
+  }
+
+  // FRAME top-level → layout/{name}
+  if ((node.type === 'FRAME' || node.type === 'GROUP') && 'children' in node) {
+    if (node.parent && node.parent.type === 'PAGE') {
+      return `layout/${tokenName}`;
+    }
+    return `component/${tokenName}`;
+  }
+
+  // Fallback
+  return `token/${tokenName}`;
 }
 
 

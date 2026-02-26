@@ -1387,10 +1387,10 @@
             <div class="row-sub">Semantic structure applied to layers</div>
           </div>
           <select id="convention-select" class="sel" aria-label="Naming convention">
-            <option value="architect">Architect</option>
+            <option value="handoff">Handoff</option>
             <option value="atomic" selected>Hierarchical</option>
-            <option value="slash">Slash</option>
-            <option value="bem">BEM</option>
+            <option value="component">Component</option>
+            <option value="token">Token</option>
           </select>
         </div>
 
@@ -1701,10 +1701,10 @@
     const exampleEl = document.getElementById('convention-example');
 
     const EXAMPLES = {
-      architect: 'section.[name] + card-item / list-item',
-      atomic: 'Item → Container → Section → Block',
-      slash: 'Button / Primary',
-      bem: 'button__primary--active',
+      handoff:    'section/hero · nav/bar · list/items · icon/close · img/banner',
+      atomic:     'Item → Container → Section → Block',
+      component:  'Button / Primary · Card / Hero · Input / Default',
+      token:      'text/heading-1 · icon/arrow · asset/img · component/card',
     };
 
     function updateExample() {
