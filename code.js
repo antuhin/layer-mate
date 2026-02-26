@@ -2545,16 +2545,24 @@ function convertToSemantic(node, baseName) {
       return 'icon-btn';
     }
 
-    // ── Button — small frame, text only, optional icon ───────────────
-    if (h < 56 && textKids.length >= 1 && frameKids.length === 0) {
+    // ── Button — MUST have background fill + padding (real interactive button)
+    // Without these, it's just a row/label/text group, not a button.
+    const fills = Array.isArray(node.fills) ? node.fills : [];
+    const hasVisibleFill = fills.some(f => f.type === 'SOLID' && (f.opacity == null || f.opacity > 0.05));
+    const hasPadding = (node.paddingLeft || 0) > 4 || (node.paddingRight || 0) > 4;
+    if (h < 56 && h > 0 && hasVisibleFill && hasPadding && textKids.length >= 1 && frameKids.length === 0) {
       return 'btn';
     }
 
     // ── Tabs / Nav strip — horizontal, 3+ equal sibling frames ───────
     if (isHoriz && frameKids.length >= 3) return 'tabs';
 
-    // ── Toolbar — wide, shallow horizontal bar ───────────────────────
-    if (isHoriz && h > 0 && w / h > 4) return 'toolbar';
+    // ── Toolbar — short, horizontal, action-item children only.
+    // Must be < 56px tall (toolbars are compact) AND children must all be
+    // small icon/button-sized (< 60px wide) to avoid false-positives on
+    // content rows, session rows, etc.
+    const allSmallKids = frameKids.every(c => (c.width || 999) < 60);
+    if (isHoriz && h > 0 && h < 56 && w / h > 5 && allSmallKids) return 'toolbar';
 
     // ── Card — image + content stacked ───────────────────────────────
     if (imageKids.length > 0 && (textKids.length > 0 || frameKids.length > 0)) {
