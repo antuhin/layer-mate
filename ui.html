@@ -1379,24 +1379,36 @@
 
       <!-- Convention + Casing card -->
       <div class="card">
-        <div class="card-title">Naming Settings</div>
+        <div class="card-title">Naming Style</div>
 
         <div class="form-row">
           <div class="row-label">
             Convention
-            <div class="row-sub">Semantic structure applied to layers</div>
+            <div class="row-sub">How layers will be named</div>
           </div>
           <select id="convention-select" class="sel" aria-label="Naming convention">
-            <option value="handoff">Handoff</option>
-            <option value="atomic" selected>Hierarchical</option>
-            <option value="component">Component</option>
-            <option value="token">Token</option>
+            <option value="handoff">Dev Ready</option>
+            <option value="atomic" selected>Auto Clean</option>
+            <option value="component">Library</option>
+            <option value="token">Design System</option>
           </select>
         </div>
 
-        <div class="example-tag">
+        <!-- Best for badge -->
+        <div id="convention-best-for" style="
+          font-size: 10px;
+          color: var(--text-3);
+          background: var(--bg-1);
+          border: 1px solid var(--border);
+          border-radius: var(--r-sm);
+          padding: 5px 10px;
+          margin-top: 2px;
+          line-height: 1.5;
+        "></div>
+
+        <div class="example-tag" style="margin-top:6px;">
           <span>eg</span>
-          <code id="convention-example">Item → Container → Section → Block</code>
+          <code id="convention-example">Frame 1 → item · Group 3 → section</code>
         </div>
       </div>
 
@@ -1701,17 +1713,22 @@
     const exampleEl = document.getElementById('convention-example');
 
     const EXAMPLES = {
-      handoff:    'section/hero · nav/bar · list/items · icon/close · img/banner',
-      atomic:     'Item → Container → Section → Block',
-      component:  'Button / Primary · Card / Hero · Input / Default',
-      token:      'text/heading-1 · icon/arrow · asset/img · component/card',
+      handoff: { eg: 'Frame 1 → section/hero  ·  Group → nav/bar  ·  Vector → icon/close', best: '🤝 Best for: Developer handoff — names map directly to HTML elements' },
+      atomic: { eg: 'Frame 1 → item  ·  Group → container  ·  Outer frame → section', best: '✨ Best for: General cleanup — smart depth-based naming for any file' },
+      component: { eg: 'ButtonPrimary → Button / Primary  ·  CardHero → Card / Hero', best: '📚 Best for: Component libraries — groups variants with Figma slash notation' },
+      token: { eg: 'Heading text → text/heading-1  ·  Arrow → icon/arrow  ·  Frame → component/card', best: '🎨 Best for: Design systems — paths compatible with Tokens Studio & style-dictionary' },
     };
 
     function updateExample() {
       if (exampleEl && conventionSelect) {
-        exampleEl.textContent = EXAMPLES[conventionSelect.value] || EXAMPLES.atomic;
+        const data = EXAMPLES[conventionSelect.value] || EXAMPLES.atomic;
+        exampleEl.textContent = data.eg;
+        const bestFor = document.getElementById('convention-best-for');
+        if (bestFor) bestFor.textContent = data.best;
       }
     }
+    // Set initial state
+    updateExample();
 
     conventionSelect.addEventListener('change', updateExample);
 
