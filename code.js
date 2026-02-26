@@ -2342,8 +2342,8 @@ async function generateName(node, casing = 'pascal', convention = 'atomic', pref
     case 'component':
       baseName = convertToComponent(baseName);
       break;
-    case 'token':
-      baseName = convertToToken(node, baseName);
+    case 'semantic':
+      baseName = convertToSemantic(node, baseName);
       break;
     case 'handoff':
       baseName = convertToHandoff(node, baseName);
@@ -2449,56 +2449,140 @@ function convertToHandoff(node, baseName) {
 }
 
 // ========================================
-// CONVENTION: TOKEN (replaces BEM)
-// Produces design-token-style paths (category/name).
-// Compatible with Tokens Studio and style-dictionary.
-// Examples:
-//   TEXT with style   → text/heading-1
-//   IMAGE fill        → asset/img
-//   VECTOR            → icon/arrow
-//   FRAME (top-level) → layout/hero
-//   FRAME (child)     → component/card
+// CONVENTION: SEMANTIC
+// Detects real UI patterns from node structure, layout, dimensions,
+// child composition and border radius — names in the shared vocabulary
+// that both designers and developers already know.
+//
+// Detection priority:
+//   1. Node type (Vector, Text, Image, Ellipse)
+//   2. Shape analysis (circle = avatar, thin = divider)
+//   3. Top-level frame analysis (navbar, hero, sidebar, section)
+//   4. Child composition (badge, card, tabs, form, list, btn...)
 // ========================================
-function convertToToken(node, baseName) {
-  // Normalize to token-style path segment (kebab, no slashes)
-  const tokenName = baseName
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/[\s_]+/g, '-')
-    .replace(/\/+/g, '-')
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '') || 'layer';
+function convertToSemantic(node, baseName) {
 
-  // TEXT → text/{name}
+  // ── 1. Leaf types ─────────────────────────────────────────────────
+
+  if (node.type === 'VECTOR' || node.type === 'STAR' || node.type === 'POLYGON' || node.type === 'LINE') {
+    return 'icon';
+  }
+
   if (node.type === 'TEXT') {
-    return `text/${tokenName}`;
+    const size = typeof node.fontSize === 'number' ? node.fontSize : 14;
+    if (size >= 32) return 'heading';
+    if (size >= 20) return 'subheading';
+    if (size >= 14) return 'body-text';
+    return 'caption';
   }
 
-  // VECTOR / SHAPES → icon/{name}
-  if (node.type === 'VECTOR' || node.type === 'STAR' || node.type === 'POLYGON' ||
-    node.type === 'ELLIPSE' || node.type === 'LINE') {
-    return `icon/${tokenName}`;
+  if (node.type === 'ELLIPSE') {
+    return hasImageFill(node) ? 'avatar' : 'shape';
   }
 
-  // RECTANGLE with image → asset/{name}
-  if (node.type === 'RECTANGLE' && hasImageFill(node)) {
-    return `asset/${tokenName}`;
-  }
-
-  // FRAME top-level → layout/{name}
-  if ((node.type === 'FRAME' || node.type === 'GROUP') && 'children' in node) {
-    if (node.parent && node.parent.type === 'PAGE') {
-      return `layout/${tokenName}`;
+  if (node.type === 'RECTANGLE') {
+    const h = node.height || 1;
+    const w = node.width || 1;
+    // Very thin = divider
+    if (h <= 2 || w <= 2) return 'divider';
+    // Image fills → detect by aspect ratio
+    if (hasImageFill(node)) {
+      const ratio = w / h;
+      if (ratio > 3) return 'banner';
+      if (ratio > 1.5) return 'thumbnail';
+      if (Math.abs(ratio - 1) < 0.25) return 'avatar';
+      return 'media';
     }
-    return `component/${tokenName}`;
+    return 'shape';
   }
 
-  // Fallback
-  return `token/${tokenName}`;
+  // ── 2. Frame / Group ─────────────────────────────────────────────
+
+  if ((node.type === 'FRAME' || node.type === 'GROUP') && 'children' in node) {
+    const children = node.children || [];
+    const childCount = children.length;
+    const layoutMode = node.layoutMode || 'NONE';
+    const isTopLevel = node.parent && node.parent.type === 'PAGE';
+    const isHoriz = layoutMode === 'HORIZONTAL';
+    const isVert = layoutMode === 'VERTICAL';
+    const w = node.width || 0;
+    const h = node.height || 0;
+
+    // Empty frame
+    if (childCount === 0) return 'placeholder';
+
+    // ── Top-level frames (direct children of page) ──────────────────
+    if (isTopLevel) {
+      if (isHoriz && h < 100 && h > 0) return 'navbar';
+      if (isVert && w < 300 && w > 0) return 'sidebar';
+      if (h > w * 1.5) return 'section';
+      return 'hero';
+    }
+
+    // ── Classify children ────────────────────────────────────────────
+    const frameKids = children.filter(c => c.type === 'FRAME' || c.type === 'GROUP' ||
+      c.type === 'COMPONENT' || c.type === 'INSTANCE');
+    const textKids = children.filter(c => c.type === 'TEXT');
+    const vectorKids = children.filter(c => c.type === 'VECTOR' || c.type === 'STAR' ||
+      c.type === 'POLYGON' || c.type === 'LINE');
+    const imageKids = children.filter(c => hasImageFill(c));
+
+    // Safe corner radius (may be 'mixed' symbol)
+    const cr = typeof node.cornerRadius === 'number' ? node.cornerRadius : 0;
+
+    // ── Badge / Chip — small, pill-shaped ───────────────────────────
+    if (h > 0 && h < 40 && w < 200 && cr >= h / 2 && childCount <= 3) {
+      return 'badge';
+    }
+
+    // ── Avatar — square/circle frame with image or initials ─────────
+    if (Math.abs(w - h) <= 4 && cr >= w / 2) {
+      return imageKids.length > 0 ? 'avatar' : 'avatar';
+    }
+
+    // ── Icon button — tiny frame + single vector ─────────────────────
+    if (vectorKids.length > 0 && childCount === 1 && w < 56 && h < 56) {
+      return 'icon-btn';
+    }
+
+    // ── Button — small frame, text only, optional icon ───────────────
+    if (h < 56 && textKids.length >= 1 && frameKids.length === 0) {
+      return 'btn';
+    }
+
+    // ── Tabs / Nav strip — horizontal, 3+ equal sibling frames ───────
+    if (isHoriz && frameKids.length >= 3) return 'tabs';
+
+    // ── Toolbar — wide, shallow horizontal bar ───────────────────────
+    if (isHoriz && h > 0 && w / h > 4) return 'toolbar';
+
+    // ── Card — image + content stacked ───────────────────────────────
+    if (imageKids.length > 0 && (textKids.length > 0 || frameKids.length > 0)) {
+      return 'card';
+    }
+
+    // ── Modal — large centered frame ─────────────────────────────────
+    if (w > 300 && h > 200 && cr >= 8 && frameKids.length >= 2) return 'modal';
+
+    // ── List — vertical stack of repeated frames ──────────────────────
+    if (isVert && frameKids.length >= 2) return 'list';
+
+    // ── Row — generic horizontal group ───────────────────────────────
+    if (isHoriz) return 'row';
+
+    // ── Stack — generic vertical group ───────────────────────────────
+    if (isVert) return 'stack';
+
+    // ── Wrapper — single child container ────────────────────────────
+    if (childCount === 1) return 'wrapper';
+
+    // ── Fallback ─────────────────────────────────────────────────────
+    return 'group';
+  }
+
+  // Absolute fallback
+  return baseName.toLowerCase().replace(/\s+/g, '-') || 'layer';
 }
-
-
 
 
 

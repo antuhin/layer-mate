@@ -1390,7 +1390,7 @@
             <option value="handoff">Dev Ready</option>
             <option value="atomic" selected>Auto Clean</option>
             <option value="component">Library</option>
-            <option value="token">Design System</option>
+            <option value="semantic">Semantic</option>
           </select>
         </div>
 
@@ -1716,7 +1716,7 @@
       handoff: { eg: 'Frame 1 → section/hero  ·  Group → nav/bar  ·  Vector → icon/close', best: '🤝 Best for: Developer handoff — names map directly to HTML elements' },
       atomic: { eg: 'Frame 1 → item  ·  Group → container  ·  Outer frame → section', best: '✨ Best for: General cleanup — smart depth-based naming for any file' },
       component: { eg: 'ButtonPrimary → Button / Primary  ·  CardHero → Card / Hero', best: '📚 Best for: Component libraries — groups variants with Figma slash notation' },
-      token: { eg: 'Heading text → text/heading-1  ·  Arrow → icon/arrow  ·  Frame → component/card', best: '🎨 Best for: Design systems — paths compatible with Tokens Studio & style-dictionary' },
+      semantic:   { eg: 'Frame 1 → navbar  ·  Circle+img → avatar  ·  Small pill → badge  ·  Vector → icon', best: '🧩 Semantic: names layers by recognized UI patterns both designers & devs already know' },
     };
 
     function updateExample() {
