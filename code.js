@@ -2512,11 +2512,11 @@ function convertToSemantic(node, baseName) {
     if (childCount === 0) return 'placeholder';
 
     // ── Top-level frames (direct children of page) ──────────────────
+    // Use spatial/positional names — we can't reliably know the PURPOSE.
     if (isTopLevel) {
-      if (isHoriz && h < 100 && h > 0) return 'navbar';
-      if (isVert && w < 300 && w > 0) return 'sidebar';
-      if (h > w * 1.5) return 'section';
-      return 'hero';
+      if (isHoriz && h < 100 && h > 0) return 'top-bar';   // short horizontal = top-bar
+      if (isVert && w < 300 && w > 0) return 'side-panel'; // narrow vertical = side panel
+      return 'section'; // everything else = a named section
     }
 
     // ── Classify children ────────────────────────────────────────────
@@ -2554,28 +2554,32 @@ function convertToSemantic(node, baseName) {
       return 'btn';
     }
 
-    // ── Tabs / Nav strip — horizontal, 3+ equal sibling frames ───────
-    if (isHoriz && frameKids.length >= 3) return 'tabs';
+    // ── Tabs / Nav strip — horizontal, 3+ child frames ───────────────
+    // We CANNOT reliably distinguish tabs from a session list, a card row,
+    // or any other horizontal group. So fall through to 'row'.
 
-    // ── Toolbar — short, horizontal, action-item children only.
-    // Must be < 56px tall (toolbars are compact) AND children must all be
-    // small icon/button-sized (< 60px wide) to avoid false-positives on
-    // content rows, session rows, etc.
-    const allSmallKids = frameKids.every(c => (c.width || 999) < 60);
-    if (isHoriz && h > 0 && h < 56 && w / h > 5 && allSmallKids) return 'toolbar';
+    // ── Toolbar — now part of the general row fallback ────────────────
+    // (Previously detected by w/h ratio, too many false positives.)
 
-    // ── Card — image + content stacked ───────────────────────────────
+    // ── Content block — image + content stacked ───────────────────────
+    // 'card' is too loaded a term — same structure can be a product card,
+    // a profile tile, a media block. Use neutral 'content-block' instead.
     if (imageKids.length > 0 && (textKids.length > 0 || frameKids.length > 0)) {
-      return 'card';
+      return 'content-block';
     }
 
-    // ── Modal — large centered frame ─────────────────────────────────
-    if (w > 300 && h > 200 && cr >= 8 && frameKids.length >= 2) return 'modal';
+    // ── Panel — large contained area ──────────────────────────────────
+    // 'modal' implies intent (overlay dialog) which we can't detect.
+    // 'panel' just says: a contained, bordered section. Always correct.
+    if (w > 300 && h > 200 && cr >= 8 && frameKids.length >= 2) return 'panel';
 
-    // ── List — vertical stack of repeated frames ──────────────────────
-    if (isVert && frameKids.length >= 2) return 'list';
+    // ── List/stack — vertical group of frames ────────────────────────
+    // 'list' implies a specific UX pattern; 'stack' just means vertically
+    // stacked — always structurally accurate.
+    if (isVert && frameKids.length >= 2) return 'stack';
 
     // ── Row — generic horizontal group ───────────────────────────────
+    // Replaces tabs, toolbar, nav-strip — all are "rows" structurally.
     if (isHoriz) return 'row';
 
     // ── Stack — generic vertical group ───────────────────────────────
