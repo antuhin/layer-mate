@@ -1,4 +1,4 @@
-# Layer Mate — Smart Layer Naming & File Cleanup for Figma
+# Layer Mate — Smart Rename & Cleanup for Figma
 
 > Rename, clean, and audit your Figma layers in seconds.
 
