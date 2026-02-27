@@ -1945,9 +1945,10 @@
       setLoading(previewRenameBtn, false);
     }
 
-    function renderPreview(previews) {
+    function renderPreview(previews, capped, total) {
       previewChanges = previews;
-      previewCount.textContent = previews.length + ' change' + (previews.length !== 1 ? 's' : '');
+      const changeLabel = previews.length + ' change' + (previews.length !== 1 ? 's' : '');
+      previewCount.textContent = capped ? `${changeLabel} (first 50 shown)` : changeLabel;
 
       if (previews.length === 0) {
         previewList.innerHTML = '<div class="preview-empty">✅ All layers already have good names — nothing to rename.</div>';
@@ -1956,12 +1957,15 @@
       }
 
       previewApplyBtn.disabled = false;
+      const cappedNote = capped
+        ? `<div class="preview-empty" style="font-size:10px;padding:8px 16px;border-top:1px solid var(--border)">⚡ Showing first 50 — Apply All will rename all ${total} layers</div>`
+        : '';
       previewList.innerHTML = previews.map(p => `
         <div class="preview-row" role="listitem">
           <span class="preview-old" title="${escHtml(p.oldName)}">${escHtml(p.oldName)}</span>
           <span class="preview-arrow">→</span>
           <span class="preview-new" title="${escHtml(p.newName)}">${escHtml(p.newName)}</span>
-        </div>`).join('');
+        </div>`).join('') + cappedNote;
     }
 
     function escHtml(str) {
@@ -2244,7 +2248,7 @@
               closePreviewPanel();
               showToast(msg.error, 'error');
             } else {
-              renderPreview(msg.previews || []);
+              renderPreview(msg.previews || [], msg.capped, msg.total);
             }
             break;
 

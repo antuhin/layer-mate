@@ -263,47 +263,106 @@ function collectRenameableNodesSimple(node, result) {
   }
 }
 
-// Generate convention-aware preview of rename changes
-async function generateRenamePreview(convention, casing, filters, prefs) {
+// ─── Fast, synchronous name generator for preview ────────────────────────────
+// Key difference from generateName(): does NOT call resolveTextStyle() —
+// that async Figma API call is the #1 speed bottleneck.
+// For TEXT nodes we simply use their text content (capped at 40 chars).
+// Convention-specific transformations (Semantic, Handoff, Component) use
+// the same sync logic as the real pipeline.
+function generateNameSync(node, casing, convention, prefs) {
+  try {
+    // ── TEXT ──────────────────────────────────────────────────────────
+    if (node.type === 'TEXT') {
+      // For Semantic convention, return type-based name directly
+      if (convention === 'semantic') {
+        return convertToSemantic(node, 'text');
+      }
+      // Try text content for other conventions
+      const chars = (node.characters || '').trim().substring(0, 40);
+      const baseName = chars || 'text';
+      if (convention === 'handoff') return convertToHandoff(node, baseName);
+      return applyCasing(baseName, casing);
+    }
+
+    // ── SHAPES / VECTORS ──────────────────────────────────────────────
+    if (node.type === 'VECTOR' || node.type === 'STAR' || node.type === 'POLYGON' ||
+      node.type === 'LINE') {
+      const baseName = 'icon';
+      if (convention === 'semantic') return convertToSemantic(node, baseName);
+      if (convention === 'handoff') return convertToHandoff(node, baseName);
+      return applyCasing(baseName, casing);
+    }
+
+    // ── ELLIPSE ───────────────────────────────────────────────────────
+    if (node.type === 'ELLIPSE') {
+      const baseName = 'shape';
+      if (convention === 'semantic') return convertToSemantic(node, baseName);
+      if (convention === 'handoff') return convertToHandoff(node, baseName);
+      return applyCasing(baseName, casing);
+    }
+
+    // ── RECTANGLE ─────────────────────────────────────────────────────
+    if (node.type === 'RECTANGLE') {
+      const baseName = hasImageFill(node) ? 'img' : 'shape';
+      if (convention === 'semantic') return convertToSemantic(node, baseName);
+      if (convention === 'handoff') return convertToHandoff(node, baseName);
+      return applyCasing(baseName, casing);
+    }
+
+    // ── FRAME / GROUP ─────────────────────────────────────────────────
+    if ((node.type === 'FRAME' || node.type === 'GROUP') && 'children' in node) {
+      // Keep top-level page frames as-is
+      if (node.parent && node.parent.type === 'PAGE') return node.name;
+
+      if (convention === 'semantic') return convertToSemantic(node, node.name || 'frame');
+      if (convention === 'handoff') return convertToHandoff(node, node.name || 'frame');
+      if (convention === 'component') return convertToComponent(node.name || 'frame');
+
+      // Atomic / default — use hierarchy level
+      const baseName = determineHierarchyLevel(node) || 'frame';
+      return applyCasing(baseName, casing);
+    }
+
+    return null; // skip unknown types
+  } catch (e) {
+    return null;
+  }
+}
+
+// Generate convention-aware preview of rename changes (fast, sync, capped at 50)
+function generateRenamePreview(convention, casing, filters, prefs) {
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
-    return { error: 'No layers selected', previews: [] };
+    return { error: 'No layers selected', previews: [], total: 0 };
   }
 
-  // Use same collection logic as handleAutoRename (respects filters)
+  // Collect nodes, capped at 50 — preview doesn't need to show every layer
+  const PREVIEW_CAP = 50;
   const nodesToRename = [];
   for (const node of selection) {
     collectRenameableNodes(node, nodesToRename, filters || {});
+    if (nodesToRename.length >= PREVIEW_CAP * 2) break; // stop collecting early
   }
 
-  if (nodesToRename.length === 0) {
-    return { error: 'No renameable layers found', previews: [] };
+  const totalNodes = nodesToRename.length;
+
+  if (totalNodes === 0) {
+    return { error: 'No renameable layers found', previews: [], total: 0 };
   }
 
+  // Process sync — no await, no font loading, instant
   const previews = [];
   for (const node of nodesToRename) {
-    try {
-      const oldName = node.name;
-      let newName;
-
-      // Use architect-mode rename for handoff convention
-      if (convention === 'handoff') {
-        // For preview, just use generateName with handoff convention
-        newName = await generateName(node, casing || 'kebab', convention, prefs || {});
-      } else {
-        newName = await generateName(node, casing || 'kebab', convention || 'atomic', prefs || {});
-      }
-
-      if (newName && newName !== oldName) {
-        previews.push({ nodeId: node.id, oldName, newName });
-      }
-    } catch (e) {
-      // skip node on error
+    const oldName = node.name;
+    const newName = generateNameSync(node, casing || 'kebab', convention || 'atomic', prefs || {});
+    if (newName && newName !== oldName) {
+      previews.push({ nodeId: node.id, oldName, newName });
     }
+    if (previews.length >= PREVIEW_CAP) break;
   }
 
-  return { previews, total: nodesToRename.length };
+  return { previews, total: totalNodes, capped: totalNodes > PREVIEW_CAP };
 }
 
 // ========================================
@@ -361,7 +420,7 @@ figma.ui.onmessage = async (msg) => {
 
       // Advanced Renaming Features
       case 'preview-rename':
-        var previewResult = await generateRenamePreview(
+        var previewResult = generateRenamePreview(
           msg.convention,
           msg.casing,
           msg.filters,
@@ -371,6 +430,7 @@ figma.ui.onmessage = async (msg) => {
           type: 'rename-preview',
           previews: previewResult.previews,
           total: previewResult.total,
+          capped: previewResult.capped,
           error: previewResult.error
         });
         break;
