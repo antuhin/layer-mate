@@ -273,14 +273,30 @@ function generateNameSync(node, casing, convention, prefs) {
   try {
     // ── TEXT ──────────────────────────────────────────────────────────
     if (node.type === 'TEXT') {
-      // For Semantic convention, return type-based name directly
+      // Semantic: always use type-based structural name
       if (convention === 'semantic') {
         return convertToSemantic(node, 'text');
       }
-      // Try text content for other conventions
+
+      // Handoff: always transform TEXT to handoff path
+      if (convention === 'handoff') {
+        const chars = (node.characters || '').trim().substring(0, 40);
+        return convertToHandoff(node, chars || 'text');
+      }
+
+      // Auto Clean (atomic) + Library (component):
+      // The real generateAtomicName() calls resolveTextStyle() and if a style
+      // is found, it KEEPS the style name unchanged. We can't load the style
+      // here, but we CAN check if textStyleId is set. If it is, the real
+      // rename would produce the same name → return node.name (no preview change).
+      if (typeof node.textStyleId === 'string' && node.textStyleId.length > 0) {
+        return node.name; // real rename = no change
+      }
+
+      // No style → real rename uses text content
       const chars = (node.characters || '').trim().substring(0, 40);
       const baseName = chars || 'text';
-      if (convention === 'handoff') return convertToHandoff(node, baseName);
+      if (convention === 'component') return convertToComponent(baseName);
       return applyCasing(baseName, casing);
     }
 
