@@ -293,9 +293,8 @@ function generateNameSync(node, casing, convention, prefs) {
         return node.name; // real rename = no change
       }
 
-      // No style → real rename uses text content
-      const chars = (node.characters || '').trim().substring(0, 40);
-      const baseName = chars || 'text';
+      // No style → real rename uses 'text' as generic name
+      const baseName = 'text';
       if (convention === 'component') return convertToComponent(baseName);
       return applyCasing(baseName, casing);
     }
@@ -2726,8 +2725,10 @@ async function generateAtomicName(node, casing = 'pascal', prefs = {}) {
           return textStyle.name; // Use the exact style name — no changes
         }
       }
-      // No style connected → fall back to the actual text content anyway (better than generic "Content")
-      baseName = node.characters.trim().substring(0, 40) || 'Content';
+      // No style connected → use generic 'text' name.
+      // Using text content leads to garbled names (rhrhrhr, hhfhhh) when
+      // the content is test data. 'text' is always structurally accurate.
+      baseName = 'text';
     }
   }
   // LEVEL 1: IMAGES - Any image file

@@ -1951,7 +1951,7 @@
       previewCount.textContent = capped ? `${changeLabel} (first 50 shown)` : changeLabel;
 
       if (previews.length === 0) {
-        previewList.innerHTML = '<div class="preview-empty">✅ All layers already have good names — nothing to rename.</div>';
+        previewList.innerHTML = '<div class="preview-empty">No changes detected for the selected layers with the current convention.<br><span style="opacity:0.6">Try switching to Semantic, or select layers with default names.</span></div>';
         previewApplyBtn.disabled = true;
         return;
       }
