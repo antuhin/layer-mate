@@ -1086,6 +1086,155 @@
     }
 
     /* =============================================
+       RENAME PREVIEW PANEL
+       ============================================= */
+    #rename-preview-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    #rename-preview-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #rename-preview-panel {
+      position: fixed;
+      bottom: -100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-1);
+      border-top: 1px solid var(--border-mid);
+      border-radius: var(--r-lg) var(--r-lg) 0 0;
+      box-shadow: var(--shadow-lg);
+      z-index: 901;
+      transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #rename-preview-panel.show {
+      bottom: 0;
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .preview-header-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-0);
+    }
+
+    .preview-header-count {
+      font-size: 11px;
+      color: var(--text-3);
+      background: var(--bg-2);
+      border-radius: var(--r-sm);
+      padding: 2px 8px;
+    }
+
+    .preview-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-2);
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: var(--r-sm);
+      transition: background 0.15s;
+    }
+
+    .preview-close:hover {
+      background: var(--bg-hover);
+    }
+
+    .preview-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 6px 0;
+    }
+
+    .preview-row {
+      display: grid;
+      grid-template-columns: 1fr 18px 1fr;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      font-size: 11px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    .preview-row:last-child {
+      border-bottom: none;
+    }
+
+    .preview-row:hover {
+      background: var(--bg-hover);
+    }
+
+    .preview-old {
+      color: var(--text-2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: var(--font-mono, monospace);
+      font-size: 10px;
+    }
+
+    .preview-arrow {
+      color: var(--text-3);
+      text-align: center;
+      font-size: 10px;
+    }
+
+    .preview-new {
+      color: var(--green);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+      font-family: var(--font-mono, monospace);
+      font-size: 10px;
+    }
+
+    .preview-empty {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 11px;
+    }
+
+    .preview-footer {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .preview-footer .btn {
+      flex: 1;
+      height: 36px;
+      font-size: 12px;
+    }
+
+    /* =============================================
        TOAST
        ============================================= */
     #toast {
@@ -1437,10 +1586,17 @@
       </div>
 
       <!-- Primary action -->
-      <button id="auto-rename-btn" class="btn btn-primary" aria-label="Rename selected layers using chosen convention">
-        <span class="btn-text">Rename Layers</span>
-        <span class="spinner" role="status" aria-label="Loading"></span>
-      </button>
+      <div style="display:flex; gap:8px;">
+        <button id="preview-rename-btn" class="btn btn-primary" style="flex:1;"
+          aria-label="Preview rename changes before applying">
+          <span class="btn-text">👁 Preview Rename</span>
+          <span class="spinner" role="status" aria-label="Loading"></span>
+        </button>
+        <button id="auto-rename-btn" class="btn btn-secondary" style="width:44px; padding:0; flex-shrink:0;"
+          aria-label="Rename without preview" title="Rename directly without preview">
+          ⚡
+        </button>
+      </div>
 
       <!-- Cleanup utilities card -->
       <!-- Cleanup utilities card -->
@@ -1605,6 +1761,28 @@
   </div>
 
   <!-- =============================================
+       RENAME PREVIEW PANEL
+       ============================================= -->
+  <div id="rename-preview-overlay"></div>
+  <div id="rename-preview-panel" role="dialog" aria-label="Rename preview" aria-modal="true">
+    <div class="preview-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="preview-header-title">Preview Rename</span>
+        <span class="preview-header-count" id="preview-count">0 changes</span>
+      </div>
+      <button class="preview-close" id="preview-close-btn" aria-label="Close preview">&times;</button>
+    </div>
+    <div class="preview-list" id="preview-list" role="list"></div>
+    <div class="preview-footer">
+      <button class="btn btn-secondary" id="preview-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="preview-apply-btn">
+        <span class="btn-text">Apply All</span>
+        <span class="spinner" role="status" aria-label="Loading"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- =============================================
        TOAST
        ============================================= -->
   <div id="toast" role="status" aria-live="assertive">
@@ -1716,7 +1894,7 @@
       handoff: { eg: 'Frame 1 → section/hero  ·  Group → nav/bar  ·  Vector → icon/close', best: '🤝 Best for: Developer handoff — names map directly to HTML elements' },
       atomic: { eg: 'Frame 1 → item  ·  Group → container  ·  Outer frame → section', best: '✨ Best for: General cleanup — smart depth-based naming for any file' },
       component: { eg: 'ButtonPrimary → Button / Primary  ·  CardHero → Card / Hero', best: '📚 Best for: Component libraries — groups variants with Figma slash notation' },
-      semantic:   { eg: 'Frame 1 → navbar  ·  Circle+img → avatar  ·  Small pill → badge  ·  Vector → icon', best: '🧩 Semantic: names layers by recognized UI patterns both designers & devs already know' },
+      semantic: { eg: 'Frame 1 → navbar  ·  Circle+img → avatar  ·  Small pill → badge  ·  Vector → icon', best: '🧩 Semantic: names layers by recognized UI patterns both designers & devs already know' },
     };
 
     function updateExample() {
@@ -1732,22 +1910,101 @@
 
     conventionSelect.addEventListener('change', updateExample);
 
-    // ─── Auto-rename ─────────────────────────────────────────────────
+    // ─── Preview Rename ───────────────────────────────────────────────
+    const previewRenameBtn = document.getElementById('preview-rename-btn');
+    const previewOverlay = document.getElementById('rename-preview-overlay');
+    const previewPanel = document.getElementById('rename-preview-panel');
+    const previewList = document.getElementById('preview-list');
+    const previewCount = document.getElementById('preview-count');
+    const previewApplyBtn = document.getElementById('preview-apply-btn');
+    const previewCancelBtn = document.getElementById('preview-cancel-btn');
+    const previewCloseBtn = document.getElementById('preview-close-btn');
+
+    let previewChanges = []; // holds { nodeId, oldName, newName }
+
+    function getFilters() {
+      return {
+        skipLocked: document.getElementById('filter-locked')?.checked || false,
+        skipHidden: document.getElementById('filter-hidden')?.checked || false,
+        onlyDefaultNames: document.getElementById('filter-default')?.checked || false,
+      };
+    }
+
+    function openPreviewPanel() {
+      previewOverlay.classList.add('show');
+      previewPanel.classList.add('show');
+      document.getElementById('preview-list').innerHTML =
+        '<div class="preview-empty">⏳ Loading preview…</div>';
+      previewCount.textContent = '…';
+    }
+
+    function closePreviewPanel() {
+      previewOverlay.classList.remove('show');
+      previewPanel.classList.remove('show');
+      previewChanges = [];
+      setLoading(previewRenameBtn, false);
+    }
+
+    function renderPreview(previews) {
+      previewChanges = previews;
+      previewCount.textContent = previews.length + ' change' + (previews.length !== 1 ? 's' : '');
+
+      if (previews.length === 0) {
+        previewList.innerHTML = '<div class="preview-empty">✅ All layers already have good names — nothing to rename.</div>';
+        previewApplyBtn.disabled = true;
+        return;
+      }
+
+      previewApplyBtn.disabled = false;
+      previewList.innerHTML = previews.map(p => `
+        <div class="preview-row" role="listitem">
+          <span class="preview-old" title="${escHtml(p.oldName)}">${escHtml(p.oldName)}</span>
+          <span class="preview-arrow">→</span>
+          <span class="preview-new" title="${escHtml(p.newName)}">${escHtml(p.newName)}</span>
+        </div>`).join('');
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    previewRenameBtn.addEventListener('click', () => {
+      setLoading(previewRenameBtn, true);
+      openPreviewPanel();
+      parent.postMessage({
+        pluginMessage: {
+          type: 'preview-rename',
+          convention: conventionSelect.value,
+          casing: 'kebab',
+          filters: getFilters(),
+          prefs: { textRenameContent: document.getElementById('pref-text-rename-content')?.checked || false }
+        }
+      }, '*');
+    });
+
+    previewApplyBtn.addEventListener('click', () => {
+      if (!previewChanges.length) return;
+      setLoading(previewApplyBtn, true);
+      parent.postMessage({
+        pluginMessage: { type: 'apply-preview', changes: previewChanges }
+      }, '*');
+    });
+
+    [previewCancelBtn, previewCloseBtn, previewOverlay].forEach(el => {
+      el?.addEventListener('click', closePreviewPanel);
+    });
+
+    // ─── Auto-rename (direct, no preview) ─────────────────────────────
     const autoRenameBtn = document.getElementById('auto-rename-btn');
     autoRenameBtn.addEventListener('click', () => {
       setLoading(autoRenameBtn, true);
       const textRenameContent = document.getElementById('pref-text-rename-content')?.checked || false;
-
       parent.postMessage({
         pluginMessage: {
           type: 'auto-rename',
           casing: 'kebab',
           convention: conventionSelect.value,
-          filters: {
-            skipLocked: document.getElementById('filter-locked')?.checked || false,
-            skipHidden: document.getElementById('filter-hidden')?.checked || false,
-            onlyDefaultNames: document.getElementById('filter-default')?.checked || false,
-          },
+          filters: getFilters(),
           prefs: { textRenameContent }
         }
       }, '*');
@@ -1981,8 +2238,21 @@
             }
             break;
 
+          case 'rename-preview':
+            setLoading(previewRenameBtn, false);
+            if (msg.error) {
+              closePreviewPanel();
+              showToast(msg.error, 'error');
+            } else {
+              renderPreview(msg.previews || []);
+            }
+            break;
+
           case 'auto-rename-complete':
+            // Handles both direct rename (⚡) and apply-preview
             setLoading(autoRenameBtn, false);
+            setLoading(previewApplyBtn, false);
+            closePreviewPanel();
             if (msg.count > 0) {
               showToast(`Renamed ${msg.count} layer${msg.count !== 1 ? 's' : ''} `, 'success');
             } else {

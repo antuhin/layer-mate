@@ -263,39 +263,47 @@ function collectRenameableNodesSimple(node, result) {
   }
 }
 
-// Generate preview of rename changes
-async function generateRenamePreview(options) {
-  var selection = figma.currentPage.selection;
+// Generate convention-aware preview of rename changes
+async function generateRenamePreview(convention, casing, filters, prefs) {
+  const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
     return { error: 'No layers selected', previews: [] };
   }
 
-  var nodesToRename = [];
-  for (var i = 0; i < selection.length; i++) {
-    collectRenameableNodesSimple(selection[i], nodesToRename);
+  // Use same collection logic as handleAutoRename (respects filters)
+  const nodesToRename = [];
+  for (const node of selection) {
+    collectRenameableNodes(node, nodesToRename, filters || {});
   }
 
   if (nodesToRename.length === 0) {
     return { error: 'No renameable layers found', previews: [] };
   }
 
-  var previews = [];
-  for (var i = 0; i < nodesToRename.length; i++) {
-    var node = nodesToRename[i];
-    var oldName = node.name;
-    var newName = await generateNameWithOptions(node, options, i);
+  const previews = [];
+  for (const node of nodesToRename) {
+    try {
+      const oldName = node.name;
+      let newName;
 
-    if (oldName !== newName) {
-      previews.push({
-        nodeId: node.id,
-        oldName: oldName,
-        newName: newName
-      });
+      // Use architect-mode rename for handoff convention
+      if (convention === 'handoff') {
+        // For preview, just use generateName with handoff convention
+        newName = await generateName(node, casing || 'kebab', convention, prefs || {});
+      } else {
+        newName = await generateName(node, casing || 'kebab', convention || 'atomic', prefs || {});
+      }
+
+      if (newName && newName !== oldName) {
+        previews.push({ nodeId: node.id, oldName, newName });
+      }
+    } catch (e) {
+      // skip node on error
     }
   }
 
-  return { previews: previews, total: nodesToRename.length };
+  return { previews, total: nodesToRename.length };
 }
 
 // ========================================
@@ -353,7 +361,12 @@ figma.ui.onmessage = async (msg) => {
 
       // Advanced Renaming Features
       case 'preview-rename':
-        var previewResult = await generateRenamePreview(msg.options);
+        var previewResult = await generateRenamePreview(
+          msg.convention,
+          msg.casing,
+          msg.filters,
+          msg.prefs
+        );
         figma.ui.postMessage({
           type: 'rename-preview',
           previews: previewResult.previews,
