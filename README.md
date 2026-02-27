@@ -2,7 +2,6 @@
 
 > Rename, clean, and audit your Figma layers in seconds.
 
-![Plugin Cover](https://github.com/antuhin/layer-mate/raw/main/cover.png)
 
 ---
 
