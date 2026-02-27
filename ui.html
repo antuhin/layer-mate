@@ -1987,10 +1987,19 @@
     });
 
     previewApplyBtn.addEventListener('click', () => {
-      if (!previewChanges.length) return;
       setLoading(previewApplyBtn, true);
+      const textRenameContent = document.getElementById('pref-text-rename-content')?.checked || false;
+      // Use the FULL auto-rename pipeline — same as the ⚡ direct button.
+      // The preview is confirmational only. This ensures text-style resolution
+      // and all async logic runs correctly (not just what fast-path detected).
       parent.postMessage({
-        pluginMessage: { type: 'apply-preview', changes: previewChanges }
+        pluginMessage: {
+          type: 'auto-rename',
+          casing: 'kebab',
+          convention: conventionSelect.value,
+          filters: getFilters(),
+          prefs: { textRenameContent }
+        }
       }, '*');
     });
 
