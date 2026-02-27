@@ -1,4 +1,4 @@
-# Layer Mate — Smart Rename & Cleanup for Figma
+# CleanUp Layers — Smart Rename & Cleanup for Figma
 
 > Rename, clean, and audit your Figma layers in seconds.
 
@@ -8,7 +8,7 @@
 
 ## 🎯 What It Does
 
-**Layer Mate** has 3 tabs + a Settings panel:
+**CleanUp Layers** has 3 tabs + a Settings panel:
 
 | Tab | What It Does |
 |-----|-------------|
@@ -127,7 +127,7 @@ Four quick-action buttons inside the Rename tab:
 ### From Figma Community
 1. Open **Figma Desktop**
 2. Go to **Plugins → Browse plugins in Community**
-3. Search **Layer Mate**
+3. Search **CleanUp Layers**
 4. Click **Install**
 
 ### For Developers (Local)
@@ -137,7 +137,7 @@ git clone https://github.com/antuhin/layer-mate.git
 1. Open Figma Desktop
 2. **Plugins → Development → Import plugin from manifest**
 3. Select `manifest.json`
-4. Run via **Plugins → Development → Layer Mate**
+4. Run via **Plugins → Development → CleanUp Layers**
 
 ---
 
@@ -170,7 +170,7 @@ layer-mate/
 
 1. Fork the repo
 2. Edit `code.js` or `ui.html`
-3. Test in Figma (Plugins → Development → Layer Mate → Run)
+3. Test in Figma (Plugins → Development → CleanUp Layers → Run)
 4. Open a Pull Request
 
 ---
