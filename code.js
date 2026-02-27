@@ -481,7 +481,6 @@ figma.ui.onmessage = async (msg) => {
           canRedo: undoManager.canRedo()
         });
         figma.notify('Renamed ' + appliedCount + ' layers');
-        await trackAction('advanced-rename', { count: appliedCount });
         break;
       }
 
@@ -525,7 +524,6 @@ figma.ui.onmessage = async (msg) => {
           canRedo: undoManager.canRedo()
         });
         figma.notify('Applied preset to ' + renamedCount + ' layers');
-        await trackAction('preset-rename', { preset: msg.preset, count: renamedCount });
         break;
 
       // Dynamic window resize
