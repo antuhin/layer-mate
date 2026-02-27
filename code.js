@@ -435,27 +435,27 @@ figma.ui.onmessage = async (msg) => {
         });
         break;
 
-      case 'apply-preview':
-        // Capture state for undo
-        var nodesToChange = [];
-        for (var i = 0; i < msg.changes.length; i++) {
-          var node = figma.getNodeById(msg.changes[i].nodeId);
-          if (node) nodesToChange.push(node);
-        }
+      case 'apply-preview': {
+        // Build a Map of nodeId → newName for fast lookup
+        const changeMap = new Map(
+          (msg.changes || []).map(c => [c.nodeId, c.newName])
+        );
+
+        // dynamic-page mode: figma.getNodeById() is unavailable.
+        // Single currentPage.findAll() pass to locate all target nodes.
+        const nodesToChange = figma.currentPage.findAll(n => changeMap.has(n.id));
+
         var state = undoManager.captureState('rename', nodesToChange);
 
-        // Apply changes
         var appliedCount = 0;
-        for (var i = 0; i < msg.changes.length; i++) {
-          var change = msg.changes[i];
-          var node = figma.getNodeById(change.nodeId);
-          if (node && 'name' in node) {
-            node.name = change.newName;
+        for (const node of nodesToChange) {
+          const newName = changeMap.get(node.id);
+          if (newName && 'name' in node) {
+            node.name = newName;
             appliedCount++;
           }
         }
 
-        // Update undo state
         undoManager.updateState(state, nodesToChange);
 
         figma.ui.postMessage({
@@ -467,6 +467,7 @@ figma.ui.onmessage = async (msg) => {
         figma.notify('Renamed ' + appliedCount + ' layers');
         await trackAction('advanced-rename', { count: appliedCount });
         break;
+      }
 
       case 'apply-preset':
         var selection = figma.currentPage.selection;
