@@ -8,76 +8,98 @@
 
 ## 🎯 What It Does
 
-**Layer Mate** gives you 4 powerful tools in one compact panel:
+**Layer Mate** has 3 tabs + a Settings panel:
 
 | Tab | What It Does |
 |-----|-------------|
-| 🔍 **Scan** | Instant file health check — counts hidden, locked, unnamed & empty layers |
-| ✏️ **Rename** | Smart layer renaming with 4 naming conventions + live Preview Rename |
-| 🧹 **Cleanup** | One-click removal of hidden layers, empty frames & redundant wrappers |
-| ✅ **QA** | Contrast audit, small fonts, touch targets & a visual health score |
+| 🔍 **Scan** | File health check — counts hidden, locked, unnamed & empty layers |
+| ✏️ **Rename** | 4 naming conventions, Preview Rename, and Cleanup Tools |
+| 🛡️ **Audit** | Contrast, small fonts, touch targets, detached colors & health score |
 
 ---
 
-## ✏️ Naming Conventions
+## ✏️ Rename Tab
 
-### 🧹 Auto Clean *(default)*
-Depth-based structural names — great for general cleanup.
+### Naming Conventions
+
+Choose from 4 conventions in the **Convention** dropdown:
+
+#### 🧹 Auto Clean *(default)*
+Depth-based structural names — smart cleanup for any file.
 ```
 Frame 1   →  item
 Group 3   →  container
 Section   →  section
-Page root →  block
 ```
 
-### 🤝 Dev Ready
-HTML semantic names — maps layers directly to web elements, perfect for developer handoff.
+#### 🤝 Dev Ready
+HTML semantic names — maps layers to web elements for developer handoff.
 ```
-Horizontal frame     →  nav/bar
-Full-width section   →  section/hero
-Vector shape         →  icon/close
-Image fill frame     →  img/banner
+Horizontal frame   →  nav
+Full-width section →  section
+Vector shape       →  icon
+Image fill frame   →  img
 ```
 
-### 📚 Library
-Figma slash notation — auto-groups variants for component libraries.
+#### 📚 Library
+Figma slash notation — groups variants for component libraries.
 ```
 ButtonPrimary  →  Button / Primary
 CardHero       →  Card / Hero
 ```
 
-### 🧩 Semantic *(new)*
-Detects real UI patterns from structure, shadow, stroke, and content — names that both designers and developers already know.
+#### 🧩 Semantic
+Detects real UI patterns from structure, shadows, strokes, and fills.
 
 | Layer structure | Name |
 |---|---|
 | Horizontal top-level frame | `top-bar` |
 | Narrow vertical frame | `side-panel` |
-| VECTOR node | `icon` |
+| VECTOR / shape node | `icon` |
 | Circle + image fill | `avatar` |
 | Small pill-shaped frame | `badge` |
-| Frame with drop shadow + image + content | `card` |
-| Frame with shadow, small, rounded | `popup` |
-| Bordered + large + rounded | `panel` |
-| Frame with fill + padding + short text | `btn` |
-| Same, with shadow | `cta-btn` |
+| Frame + shadow + image + content | `card` |
+| Frame + shadow, small, rounded | `popup` |
+| Frame + fill + padding + short text | `btn` |
 | Stroke + empty + short height | `input` |
 | Horizontal group | `row` |
 | Vertical group | `stack` |
 
 ---
 
-## 👁 Preview Rename
+### Filters
 
-Before applying any rename, click **Preview Rename** to see exactly what will change:
+- **Skip locked layers** — don't rename locked layers
+- **Skip hidden layers** — don't rename hidden layers
+- **Only rename defaults** — only rename layers with default names (Frame 1, Group 3…)
 
-1. Select your layers
+---
+
+### Rename Buttons
+
+- **Rename Layers** (big blue button) — applies rename immediately
+- **👁** (icon button) — opens Preview panel to see Before → After before applying
+
+### 👁 Preview Rename
+
+1. Select layers on canvas
 2. Choose a convention
-3. Click **👁 Preview Rename**
-4. Review the Before → After list in the slide-up panel
+3. Click **👁** to open the preview panel
+4. Review the Before → After list
 5. Click **Apply All** or **Cancel**
 
-Use **⚡** to rename directly without preview.
+---
+
+### Cleanup Tools
+
+Four quick-action buttons inside the Rename tab:
+
+| Button | Action |
+|---|---|
+| 🗑 Remove Hidden | Deletes all hidden layers in selection |
+| 📦 Flatten Wrappers | Removes redundant single-child frames |
+| 🔓 Unlock All Layers | Unlocks all locked layers in selection |
+| 🚫 Empty Frames | Removes empty frames and groups |
 
 ---
 
@@ -86,20 +108,11 @@ Use **⚡** to rename directly without preview.
 - Count **total, hidden, locked, unnamed** layers
 - Detect **empty frames** and **deeply nested** layers
 - Visual **File Health Score (0–100)**
-- Click any metric to **select affected layers** on canvas
+- Click any metric to **select those layers** on canvas
 
 ---
 
-## 🧹 Cleanup Tab
-
-- **Remove hidden layers** — safely delete non-visible layers
-- **Flatten wrappers** — ungroup redundant single-child frames
-- **Remove empty frames/groups**
-- **Unlock all layers** in selection
-
----
-
-## ✅ QA Tab
+## 🛡️ Audit Tab
 
 - **Detached Color Audit** — find fills not linked to styles/variables
 - **Contrast Audit** — detect WCAG 2.1 AA failures
@@ -134,19 +147,20 @@ git clone https://github.com/antuhin/layer-mate.git
 layer-mate/
 ├── manifest.json   — Plugin configuration
 ├── code.js         — Backend (Figma Plugin API)
-└── ui.html         — UI (HTML + CSS + JS, inline)
+└── ui.html         — UI (HTML + CSS + JS, single file)
 ```
 
+- **documentAccess**: `dynamic-page` (current page only)
 - **Theme**: Respects Figma light/dark via `themeColors: true`
 - **Undo**: Full undo support on all rename actions
-- **Settings**: Preferences persisted via `figma.clientStorage`
+- **Persistence**: Last-used convention saved via `figma.clientStorage`
 
 ---
 
 ## 🛣️ Roadmap
 
-- [ ] Export QA audit as Markdown
 - [ ] Multi-page scan support
+- [ ] Export Audit report as Markdown
 - [ ] Auto-link detached colors to nearest style
 - [ ] Naming consistency score in Scan tab
 
